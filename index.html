@@ -1,0 +1,2874 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIPJU Indramayu - Sistem Informasi Penerangan Jalan Umum</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --primary: #1a3c5e;
+    --secondary: #f39c12;
+    --accent: #27ae60;
+    --danger: #e74c3c;
+    --warning: #f39c12;
+    --info: #3498db;
+    --dark: #1a1a2e;
+    --light: #f8f9fa;
+    --card-bg: #ffffff;
+    --text: #333;
+    --sidebar-width: 260px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: var(--text); }
+
+  /* TOPBAR */
+  .topbar {
+    background: linear-gradient(135deg, var(--primary), #2c5f8a);
+    color: white;
+    padding: 0 20px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .topbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .topbar .logo .icon-lamp {
+    width: 40px; height: 40px;
+    background: var(--secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .topbar .top-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .topbar .top-right .notif-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    font-size: 16px;
+  }
+  .badge-notif {
+    position: absolute;
+    top: -2px; right: -2px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    width: 18px; height: 18px;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .topbar .user-info .avatar {
+    width: 36px; height: 36px;
+    background: var(--secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    top: 60px; left: 0;
+    width: var(--sidebar-width);
+    height: calc(100vh - 60px);
+    background: var(--dark);
+    overflow-y: auto;
+    z-index: 900;
+    transition: transform 0.3s;
+  }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+  .sidebar-menu { padding: 15px 0; }
+  .sidebar-title {
+    color: #888;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 10px 20px 5px;
+    text-transform: uppercase;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #ccc;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    border-left: 3px solid transparent;
+  }
+  .sidebar-item:hover {
+    background: rgba(255,255,255,0.07);
+    color: white;
+  }
+  .sidebar-item.active {
+    background: rgba(243,156,18,0.15);
+    color: var(--secondary);
+    border-left-color: var(--secondary);
+  }
+  .sidebar-item .icon { width: 20px; text-align: center; font-size: 16px; }
+  .sidebar-item .badge {
+    margin-left: auto;
+    background: var(--danger);
+    color: white;
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: bold;
+  }
+  .sidebar-item .badge.green { background: var(--accent); }
+
+  /* MAIN CONTENT */
+  .main {
+    margin-left: var(--sidebar-width);
+    margin-top: 60px;
+    padding: 25px;
+    min-height: calc(100vh - 60px);
+  }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 25px;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-3px); }
+  .stat-card .stat-icon {
+    width: 55px; height: 55px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .stat-card .stat-info .number {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-card .stat-info .label {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+  }
+  .stat-card .stat-info .sub {
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+  }
+  .bg-blue { background: rgba(52,152,219,0.15); color: var(--info); }
+  .bg-green { background: rgba(39,174,96,0.15); color: var(--accent); }
+  .bg-red { background: rgba(231,76,60,0.15); color: var(--danger); }
+  .bg-orange { background: rgba(243,156,18,0.15); color: var(--warning); }
+  .bg-purple { background: rgba(155,89,182,0.15); color: #9b59b6; }
+
+  /* PAGE HEADER */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .page-header h2 {
+    font-size: 22px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .page-header h2 .ph-icon {
+    background: var(--primary);
+    color: white;
+    width: 35px; height: 35px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: #2c5f8a; }
+  .btn-success { background: var(--accent); color: white; }
+  .btn-success:hover { background: #229954; }
+  .btn-warning { background: var(--warning); color: white; }
+  .btn-warning:hover { background: #e67e22; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-info { background: var(--info); color: white; }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+  }
+  .btn-outline:hover { background: var(--primary); color: white; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  /* CARDS */
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .card-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fafafa;
+  }
+  .card-header h3 {
+    font-size: 15px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-body { padding: 20px; }
+
+  /* MAP */
+  #map-container {
+    height: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+  }
+  .map-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+  .map-legend {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 15px;
+  }
+  .map-legend h4 { font-size: 13px; margin-bottom: 10px; color: #555; }
+  .legend-items {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+
+  /* TABLES */
+  .table-wrapper { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table th {
+    background: var(--primary);
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+  }
+  table tr:hover { background: #f8f9fa; }
+  .status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .status-active { background: rgba(39,174,96,0.15); color: var(--accent); }
+  .status-mati { background: rgba(231,76,60,0.15); color: var(--danger); }
+  .status-rusak { background: rgba(243,156,18,0.15); color: var(--warning); }
+  .status-proses { background: rgba(52,152,219,0.15); color: var(--info); }
+  .status-ilegal { background: rgba(155,89,182,0.15); color: #9b59b6; }
+  .status-pending { background: rgba(127,140,141,0.15); color: #7f8c8d; }
+
+  /* FORMS */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+  }
+  .form-group { margin-bottom: 15px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #555;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,60,94,0.1);
+  }
+  textarea.form-control { resize: vertical; min-height: 100px; }
+  select.form-control { cursor: pointer; }
+
+  /* FORUM */
+  .forum-post {
+    background: white;
+    border-radius: 10px;
+    padding: 18px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+    border-left: 4px solid var(--info);
+  }
+  .forum-post.laporan { border-left-color: var(--danger); }
+  .forum-post.pertanyaan { border-left-color: var(--warning); }
+  .forum-post.usulan { border-left-color: var(--accent); }
+  .post-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .post-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .post-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+  }
+  .post-meta .name { font-weight: 700; font-size: 14px; }
+  .post-meta .time { font-size: 12px; color: #888; }
+  .post-content { font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+  .post-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .post-action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 5px;
+    transition: all 0.2s;
+  }
+  .post-action-btn:hover { background: #f0f0f0; color: var(--primary); }
+  .post-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .tag-laporan { background: rgba(231,76,60,0.1); color: var(--danger); }
+  .tag-pertanyaan { background: rgba(243,156,18,0.1); color: var(--warning); }
+  .tag-usulan { background: rgba(39,174,96,0.1); color: var(--accent); }
+  .tag-info { background: rgba(52,152,219,0.1); color: var(--info); }
+
+  /* SEARCH BAR */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 15px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  .search-input:focus { outline: none; border-color: var(--primary); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    background: #eee;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+  }
+
+  /* GRID LAYOUT */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  /* ALERT */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .alert-warning { background: rgba(243,156,18,0.12); border-left: 4px solid var(--warning); color: #856404; }
+  .alert-danger { background: rgba(231,76,60,0.12); border-left: 4px solid var(--danger); color: #7c1c14; }
+  .alert-success { background: rgba(39,174,96,0.12); border-left: 4px solid var(--accent); color: #1a5c30; }
+  .alert-info { background: rgba(52,152,219,0.12); border-left: 4px solid var(--info); color: #1a4c7c; }
+
+  /* TABS */
+  .tab-nav {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* FILTER CHIPS */
+  .filter-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+  .chip {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #ddd;
+    background: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #666;
+  }
+  .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .chip:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* TIMELINE */
+  .timeline { padding-left: 15px; }
+  .timeline-item {
+    position: relative;
+    padding-left: 25px;
+    padding-bottom: 20px;
+    border-left: 2px solid #eee;
+  }
+  .timeline-item:last-child { border-left-color: transparent; }
+  .timeline-dot {
+    position: absolute;
+    left: -8px;
+    top: 0;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+  .timeline-content { font-size: 13px; }
+  .timeline-content .time { font-size: 11px; color: #999; margin-bottom: 3px; }
+  .timeline-content .text { font-weight: 600; margin-bottom: 2px; }
+  .timeline-content .desc { color: #666; }
+
+  /* KECAMATAN CARD */
+  .kecamatan-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.06);
+    transition: transform 0.2s;
+  }
+  .kecamatan-card:hover { transform: translateY(-2px); }
+  .kecamatan-card .kec-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .kecamatan-card .kec-name { font-weight: 700; font-size: 14px; }
+  .kecamatan-card .kec-total { font-size: 20px; font-weight: 800; color: var(--primary); }
+  .kecamatan-card .kec-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 { font-size: 16px; color: var(--primary); }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #888;
+    line-height: 1;
+  }
+  .modal-body { padding: 20px; }
+  .modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 15px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar .logo span { display: none; }
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f1f1; }
+  ::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
+
+  /* ANIMATION */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .page.active { animation: fadeIn 0.3s ease; }
+
+  /* NOTIFICATION PANEL */
+  .notif-panel {
+    display: none;
+    position: fixed;
+    top: 65px; right: 15px;
+    width: 320px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+    z-index: 1500;
+    overflow: hidden;
+  }
+  .notif-panel.show { display: block; }
+  .notif-header {
+    padding: 15px;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .notif-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .notif-item:hover { background: #f8f9fa; }
+  .notif-item .ni-icon {
+    width: 35px; height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .notif-item .ni-text .title { font-size: 13px; font-weight: 600; }
+  .notif-item .ni-text .desc { font-size: 12px; color: #888; }
+  .notif-unread { background: rgba(52,152,219,0.05); }
+
+  /* METER TAG */
+  .meter-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1.5px solid #eee;
+    transition: all 0.2s;
+  }
+  .meter-card:hover { border-color: var(--primary); box-shadow: 0 3px 15px rgba(26,60,94,0.1); }
+  .meter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .meter-id { font-family: monospace; font-size: 13px; background: #f0f4f8; padding: 3px 8px; border-radius: 5px; }
+  .meter-readings {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .meter-reading {
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 8px;
+  }
+  .meter-reading .val { font-size: 16px; font-weight: 700; color: var(--primary); }
+  .meter-reading .unit { font-size: 11px; color: #888; }
+
+  /* ILEGAL ALERT */
+  .ilegal-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid #9b59b6;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+  }
+  .ilegal-card .risk-meter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .risk-bar {
+    flex: 1;
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .risk-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+  .risk-high { background: var(--danger); }
+  .risk-medium { background: var(--warning); }
+  .risk-low { background: var(--accent); }
+
+  /* FLOATING BTN */
+  .fab {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 56px; height: 56px;
+    background: var(--secondary);
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+  }
+  .fab:hover { transform: scale(1.1); }
+
+  /* HAMBURGER */
+  .hamburger {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  @media (max-width: 768px) { .hamburger { display: block; } }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: #aaa;
+  }
+  .empty-state i { font-size: 50px; margin-bottom: 15px; display: block; }
+  .empty-state p { font-size: 15px; }
+
+  /* NO-PJU ZONE */
+  .nopju-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    border: 2px dashed #ddd;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .nopju-card:hover { border-color: var(--warning); }
+  .nopju-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .priority-badge {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .p-high { background: rgba(231,76,60,0.15); color: var(--danger); }
+  .p-medium { background: rgba(243,156,18,0.15); color: var(--warning); }
+  .p-low { background: rgba(39,174,96,0.15); color: var(--accent); }
+
+  /* SPARKLINE */
+  .sparkline-container { height: 60px; }
+
+  /* CHART CONTAINER */
+  .chart-container { position: relative; height: 300px; }
+  .chart-sm { height: 220px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="logo">
+    <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div class="icon-lamp">💡</div>
+    <div>
+      <div style="font-size:15px;font-weight:800;">SIPJU Indramayu</div>
+      <div style="font-size:11px;opacity:0.7;font-weight:400;">Sistem Informasi PJU Kab. Indramayu</div>
+    </div>
+  </div>
+  <div class="top-right">
+    <div style="font-size:12px;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:5px;">
+      <i class="fas fa-circle" style="color:#2ecc71;font-size:8px;"></i>
+      <span id="clock"></span>
+    </div>
+    <button class="notif-btn" onclick="toggleNotif()">
+      <i class="fas fa-bell"></i>
+      <span class="badge-notif">5</span>
+    </button>
+    <div class="user-info">
+      <div class="avatar">AD</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Admin PJU</div>
+        <div style="font-size:11px;opacity:0.7;">Administrator</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- NOTIFICATION PANEL -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-header">
+    <span>🔔 Notifikasi</span>
+    <span style="font-size:12px;cursor:pointer;opacity:0.7" onclick="toggleNotif()">Tutup ✕</span>
+  </div>
+  <div class="notif-item notif-unread" onclick="showPage('laporan')">
+    <div class="ni-icon" style="background:rgba(231,76,60,0.1);color:var(--danger);">🔴</div>
+    <div class="ni-text">
+      <div class="title">Laporan PJU Mati Baru</div>
+      <div class="desc">Jl. Jend. Sudirman No.23 - 5 menit lalu</div>
+    </div>
+  </div>
+  <div class="notif-item notif-unread" onclick="showPage('ilegal')">
+    <div class="ni-icon" style="background:rgba(155,89,182,0.1);color:#9b59b6;">⚠️</div>
+    <div class="ni-text">
+      <div class="title">Indikasi PJU Ilegal</div>
+      <div class="desc">Kawasan Industri Indramayu - 20 menit lalu</div>
+    </div>
+  </div>
+  <div class="notif-item" onclick="showPage('permintaan')">
+    <div class="ni-icon" style="background:rgba(52,152,219,0.1);color:var(--info);">📋</div>
+    <div class="ni-text">
+      <div class="title">Permintaan Pemasangan Baru</div>
+      <div class="desc">Desa Karanganyar - 1 jam lalu</div>
+    </div>
+  </div>
+  <div class="notif-item" onclick="showPage('forum')">
+    <div class="ni-icon" style="background:rgba(39,174,96,0.1);color:var(--accent);">💬</div>
+    <div class="ni-text">
+      <div class="title">Komentar Baru di Forum</div>
+      <div class="desc">Thread: PJU RT.03 Paoman - 2 jam lalu</div>
+    </div>
+  </div>
+  <div class="notif-item">
+    <div class="ni-icon" style="background:rgba(243,156,18,0.1);color:var(--warning);">📊</div>
+    <div class="ni-text">
+      <div class="title">Laporan Bulanan Tersedia</div>
+      <div class="desc">Laporan PJU Juni 2025 - 1 hari lalu</div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-menu">
+    <div class="sidebar-title">Menu Utama</div>
+    <div class="sidebar-item active" onclick="showPage('dashboard')">
+      <span class="icon">📊</span> Dashboard Utama
+    </div>
+    <div class="sidebar-item" onclick="showPage('peta')">
+      <span class="icon">🗺️</span> Peta & Titik PJU
+    </div>
+    <div class="sidebar-item" onclick="showPage('titikpju')">
+      <span class="icon">💡</span> Data Titik PJU
+      <span class="badge green">2.847</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('meter')">
+      <span class="icon">⚡</span> Tagging Meter
+    </div>
+
+    <div class="sidebar-title">Monitoring</div>
+    <div class="sidebar-item" onclick="showPage('laporan')">
+      <span class="icon">🔴</span> Laporan PJU Mati
+      <span class="badge">12</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('ilegal')">
+      <span class="icon">⚠️</span> Prediksi PJU Ilegal
+      <span class="badge">7</span>
+    </div>
+    <div class="sidebar-item" onclick="showPage('nopju')">
+      <span class="icon">🌑</span> Zona Belum PJU
+    </div>
+
+    <div class="sidebar-title">Layanan</div>
+    <div class="sidebar-item" onclick="showPage('forum')">
+      <span class="icon">💬</span> Forum PJU
+    </div>
+    <div class="sidebar-item" onclick="showPage('permintaan')">
+      <span class="icon">📋</span> Permintaan Pasang
+    </div>
+
+    <div class="sidebar-title">Sistem</div>
+    <div class="sidebar-item">
+      <span class="icon">📈</span> Statistik & Laporan
+    </div>
+    <div class="sidebar-item">
+      <span class="icon">⚙️</span> Pengaturan
+    </div>
+    <div class="sidebar-item">
+      <span class="icon">👥</span> Manajemen User
+    </div>
+
+    <div style="padding:20px;margin-top:10px;border-top:1px solid #333;">
+      <div style="font-size:11px;color:#666;margin-bottom:8px;">v2.5.1 | © 2025 Pemkab Indramayu</div>
+      <div style="font-size:12px;color:#888;">Dinas PUPR Indramayu</div>
+      <div style="font-size:11px;color:#666;margin-top:5px;">📞 (0234) 272202</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- ======== DASHBOARD ======== -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">📊</div>
+        Dashboard Utama
+      </h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select class="form-control" style="width:auto;padding:7px 12px;">
+          <option>Kabupaten Indramayu</option>
+          <option>Kec. Indramayu</option>
+          <option>Kec. Sindang</option>
+        </select>
+        <button class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Export</button>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      <strong>Perhatian:</strong> 12 laporan PJU mati belum ditindaklanjuti. 7 titik terindikasi PJU ilegal memerlukan verifikasi segera.
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-grid">
+      <div class="stat-card" onclick="showPage('titikpju')" style="cursor:pointer">
+        <div class="stat-icon bg-blue"><i class="fas fa-lightbulb"></i></div>
+        <div class="stat-info">
+          <div class="number" style="color:var(--info)">2.847</div>
+          <div class="label">Total Titik PJU</div>
+          <div class="sub">📈 +23 bulan ini</div>
+        </div>
+      </div>
+      <div class="stat-card" onclick="showPage('titikpju')" style="cursor:pointer">
+        <div class="stat-icon bg-green"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+          <div class="number" style="color:var(--accent)">2.601</div>
+          <div class="label">PJU Aktif</div>
+          <div class="sub">91.4% dari total</div>
+        </div>
+      </div>
+      <div class="stat-card" onclick="showPage('laporan')" style="cursor:pointer">
+        <div class="stat-icon bg-red"><i class="fas fa-times-circle"></i></div>
+        <div class="stat-info">
+          <div class="number" style="color:var(--danger)">156</div>
+          <div class="label">PJU Tidak Aktif</div>
+          <div class="sub">⚡ 12 laporan baru</div>
+        </div>
+      </div>
+      <div class="stat-card" onclick="showPage('laporan')" style="cursor:pointer">
+        <div class="stat-icon bg-orange"><i class="fas fa-tools"></i></div>
+        <div class="stat-info">
+          <div class="number" style="color:var(--warning)">90</div>
+          <div class="label">Dalam Perbaikan</div>
+          <div class="sub">Estimasi 3-5 hari</div>
+        </div>
+      </div>
+      <div class="stat-card" onclick="showPage('meter')" style="cursor:pointer">
+        <div class="stat-icon bg-purple"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="stat-info">
+          <div class="number" style="color:#9b59b6">342</div>
+          <div class="label">Total Meter</div>
+          <div class="sub">PLN Terdaftar</div>
+        </div>
+      </div>
+      <div class="stat-card" onclick="showPage('ilegal')" style="cursor:pointer">
+        <div class="stat-icon" style="background:rgba(155,89,182,0.15);color:#9b59b6;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info">
+          <div class="number" style="color:#9b59b6">7</div>
+          <div class="label">Indikasi Ilegal</div>
+          <div class="sub">Perlu verifikasi</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-chart-bar"></i> PJU per Kecamatan</h3>
+          <button class="btn btn-outline btn-sm">Detail</button>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="chartKecamatan"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-chart-pie"></i> Status PJU</h3>
+          <button class="btn btn-outline btn-sm">Lihat Semua</button>
+        </div>
+        <div class="card-body">
+          <div class="chart-container">
+            <canvas id="chartStatus"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- TREN LAPORAN -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-chart-line"></i> Tren Laporan PJU (6 Bulan)</h3>
+        </div>
+        <div class="card-body">
+          <div class="chart-container chart-sm">
+            <canvas id="chartTren"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- AKTIVITAS TERBARU -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-history"></i> Aktivitas Terbaru</h3>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--danger)"></div>
+              <div class="timeline-content">
+                <div class="time">10 menit lalu</div>
+                <div class="text">Laporan PJU Mati</div>
+                <div class="desc">Jl. Soekarno-Hatta km 3, Indramayu</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--accent)"></div>
+              <div class="timeline-content">
+                <div class="time">1 jam lalu</div>
+                <div class="text">PJU Berhasil Diperbaiki</div>
+                <div class="desc">Jl. Ahmad Yani - 3 titik aktif kembali</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:#9b59b6"></div>
+              <div class="timeline-content">
+                <div class="time">3 jam lalu</div>
+                <div class="text">Indikasi PJU Ilegal Ditemukan</div>
+                <div class="desc">Kawasan Industri Indramayu, 2 titik</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--info)"></div>
+              <div class="timeline-content">
+                <div class="time">5 jam lalu</div>
+                <div class="text">Permintaan Pemasangan Baru</div>
+                <div class="desc">Desa Karanganyar - 8 titik diajukan</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--warning)"></div>
+              <div class="timeline-content">
+                <div class="time">1 hari lalu</div>
+                <div class="text">Meter Baru Ditag</div>
+                <div class="desc">Meter ID MTR-2025-342, Kec. Sindang</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KECAMATAN OVERVIEW -->
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-map-marked-alt"></i> Overview PJU per Kecamatan</h3>
+        <button class="btn btn-primary btn-sm" onclick="showPage('titikpju')">Lihat Detail</button>
+      </div>
+      <div class="card-body">
+        <div class="grid-3">
+          <div class="kecamatan-card">
+            <div class="kec-header">
+              <div>
+                <div class="kec-name">Kec. Indramayu</div>
+                <div style="font-size:11px;color:#888;">Pusat Kota</div>
+              </div>
+              <div class="kec-total">412</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:85%;background:var(--accent)"></div></div>
+            <div class="kec-stats">
+              <span>✅ 380 Aktif</span>
+              <span>🔴 22 Mati</span>
+              <span>🔧 10 Proses</span>
+            </div>
+          </div>
+          <div class="kecamatan-card">
+            <div class="kec-header">
+              <div>
+                <div class="kec-name">Kec. Sindang</div>
+                <div style="font-size:11px;color:#888;">Wilayah Utara</div>
+              </div>
+              <div class="kec-total">287</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:78%;background:var(--info)"></div></div>
+            <div class="kec-stats">
+              <span>✅ 255 Aktif</span>
+              <span>🔴 18 Mati</span>
+              <span>🔧 14 Proses</span>
+            </div>
+          </div>
+          <div class="kecamatan-card">
+            <div class="kec-header">
+              <div>
+                <div class="kec-name">Kec. Jatibarang</div>
+                <div style="font-size:11px;color:#888;">Wilayah Selatan</div>
+              </div>
+              <div class="kec-total">334</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:92%;background:var(--accent)"></div></div>
+            <div class="kec-stats">
+              <span>✅ 312 Aktif</span>
+              <span>🔴 12 Mati</span>
+              <span>🔧 10 Proses</span>
+            </div>
+          </div>
+          <div class="kecamatan-card">
+            <div class="kec-header">
+              <div>
+                <div class="kec-name">Kec. Lohbener</div>
+                <div style="font-size:11px;color:#888;">Wilayah Barat</div>
+              </div>
+              <div class="kec-total">198</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:65%;background:var(--warning)"></div></div>
+            <div class="kec-stats">
+              <span>✅ 165 Aktif</span>
+              <span>🔴 20 Mati</span>
+              <span>🔧 13 Proses</span>
+            </div>
+          </div>
+          <div class="kecamatan-card">
+            <div class="kec-header">
+              <div>
+                <div class="kec-name">Kec. Haurgeulis</div>
+                <div style="font-size:11px;color:#888;">Wilayah Timur</div>
+              </div>
+              <div class="kec-total">156</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:72%;background:var(--info)"></div></div>
+            <div class="kec-stats">
+              <span>✅ 140 Aktif</span>
+              <span>🔴 10 Mati</span>
+              <span>🔧 6 Proses</span>
+            </div>
+          </div>
+          <div class="kecamatan-card">
+            <div class="kec-header">
+              <div>
+                <div class="kec-name">+ 26 Kecamatan</div>
+                <div style="font-size:11px;color:#888;">Lainnya</div>
+              </div>
+              <div class="kec-total">1.460</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:80%;background:#9b59b6"></div></div>
+            <div class="kec-stats">
+              <span>✅ 1.349 Aktif</span>
+              <span>🔴 74 Mati</span>
+              <span>🔧 37 Proses</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PETA ======== -->
+  <div class="page" id="page-peta">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">🗺️</div>
+        Peta & Persebaran PJU
+      </h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-success btn-sm" onclick="addPJUMarker()"><i class="fas fa-plus"></i> Tambah Titik</button>
+        <button class="btn btn-info btn-sm"><i class="fas fa-download"></i> Export GIS</button>
+      </div>
+    </div>
+
+    <div class="map-legend">
+      <h4>🎯 Legenda Peta</h4>
+      <div class="legend-items">
+        <div class="legend-item"><div class="legend-dot" style="background:#27ae60"></div> PJU Aktif</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div> PJU Mati/Rusak</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f39c12"></div> Dalam Perbaikan</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b59b6"></div> Indikasi Ilegal</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3498db"></div> Tagging Meter</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7f8c8d"></div> Zona Tanpa PJU</div>
+      </div>
+    </div>
+
+    <div class="map-controls">
+      <button class="btn btn-primary btn-sm" onclick="filterMap('all')">🗺️ Semua</button>
+      <button class="btn btn-success btn-sm" onclick="filterMap('aktif')">✅ PJU Aktif</button>
+      <button class="btn btn-danger btn-sm" onclick="filterMap('mati')">🔴 PJU Mati</button>
+      <button class="btn btn-warning btn-sm" onclick="filterMap('meter')">⚡ Meter</button>
+      <button class="btn btn-sm" style="background:#9b59b6;color:white" onclick="filterMap('ilegal')">⚠️ Ilegal</button>
+      <button class="btn btn-sm" style="background:#7f8c8d;color:white" onclick="filterMap('nopju')">🌑 Tanpa PJU</button>
+    </div>
+
+    <div id="map-container"></div>
+
+    <div style="margin-top:15px;font-size:12px;color:#888;text-align:center;">
+      <i class="fas fa-info-circle"></i> Klik marker untuk detail titik PJU. Koordinat pusat: -6.3318° S, 108.3243° E (Kab. Indramayu)
+    </div>
+  </div>
+
+  <!-- ======== TITIK PJU ======== -->
+  <div class="page" id="page-titikpju">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">💡</div>
+        Data Titik PJU
+      </h2>
+      <button class="btn btn-primary" onclick="openAddPJUModal()">
+        <i class="fas fa-plus"></i> Tambah Titik PJU
+      </button>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+      <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-lightbulb"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--info)">2.847</div><div class="label">Total PJU</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-sun"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--accent)">1.234</div><div class="label">Lampu LED</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-lightbulb"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--warning)">1.045</div><div class="label">Sodium HPS</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-solar-panel"></i></div>
+        <div class="stat-info"><div class="number" style="color:#9b59b6">568</div><div class="label">Solar Panel</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-list"></i> Daftar Titik PJU</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-success btn-sm"><i class="fas fa-file-excel"></i> Excel</button>
+          <button class="btn btn-danger btn-sm"><i class="fas fa-file-pdf"></i> PDF</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="search-bar">
+          <input type="text" class="search-input" placeholder="🔍 Cari ID, Nama Jalan, Kecamatan..." oninput="filterPJU(this.value)" id="searchPJU">
+          <select class="form-control" style="width:auto" onchange="filterByStatus(this.value)">
+            <option value="">Semua Status</option>
+            <option>Aktif</option>
+            <option>Mati</option>
+            <option>Rusak</option>
+            <option>Perbaikan</option>
+          </select>
+          <select class="form-control" style="width:auto">
+            <option value="">Semua Kecamatan</option>
+            <option>Indramayu</option>
+            <option>Sindang</option>
+            <option>Jatibarang</option>
+            <option>Lohbener</option>
+            <option>Haurgeulis</option>
+          </select>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="tablePJU">
+            <thead>
+              <tr>
+                <th>ID PJU</th>
+                <th>Lokasi / Jalan</th>
+                <th>Kecamatan</th>
+                <th>Jenis Lampu</th>
+                <th>Daya (W)</th>
+                                <th>Tiang</th>
+                <th>Koordinat</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="pjuTableBody">
+              <tr>
+                <td><code>PJU-IDR-0001</code></td>
+                <td>Jl. Jend. Sudirman No.1</td>
+                <td>Indramayu</td>
+                <td>LED 80W</td>
+                <td>80</td>
+                <td>Besi Galvanis 7m</td>
+                <td><small>-6.3318, 108.3243</small></td>
+                <td><span class="status-badge status-active">✅ Aktif</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-IDR-0001')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-IDR-0002</code></td>
+                <td>Jl. Soekarno-Hatta Km.3</td>
+                <td>Indramayu</td>
+                <td>Sodium HPS 150W</td>
+                <td>150</td>
+                <td>Besi Bulat 9m</td>
+                <td><small>-6.3295, 108.3201</small></td>
+                <td><span class="status-badge status-mati">🔴 Mati</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-IDR-0002')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-SDG-0015</code></td>
+                <td>Jl. Raya Sindang No.45</td>
+                <td>Sindang</td>
+                <td>Solar Panel 40W</td>
+                <td>40</td>
+                <td>Ornamen 6m</td>
+                <td><small>-6.3412, 108.3089</small></td>
+                <td><span class="status-badge status-active">✅ Aktif</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-SDG-0015')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-JTB-0088</code></td>
+                <td>Jl. Ahmad Yani No.12</td>
+                <td>Jatibarang</td>
+                <td>LED 100W</td>
+                <td>100</td>
+                <td>Besi Galvanis 8m</td>
+                <td><small>-6.4721, 108.2934</small></td>
+                <td><span class="status-badge status-rusak">🔧 Rusak</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-JTB-0088')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-LHB-0033</code></td>
+                <td>Jl. Raya Lohbener</td>
+                <td>Lohbener</td>
+                <td>LED 60W</td>
+                <td>60</td>
+                <td>Besi Bulat 7m</td>
+                <td><small>-6.3812, 108.2234</small></td>
+                <td><span class="status-badge status-proses">⏳ Perbaikan</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-LHB-0033')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-HGS-0007</code></td>
+                <td>Jl. Raya Haurgeulis</td>
+                <td>Haurgeulis</td>
+                <td>Solar Panel 80W</td>
+                <td>80</td>
+                <td>Besi Galvanis 7m</td>
+                <td><small>-6.5123, 108.4521</small></td>
+                <td><span class="status-badge status-active">✅ Aktif</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-HGS-0007')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-IDR-0124</code></td>
+                <td>Jl. Pahlawan No.77</td>
+                <td>Indramayu</td>
+                <td>Sodium HPS 250W</td>
+                <td>250</td>
+                <td>Besi Bulat 10m</td>
+                <td><small>-6.3280, 108.3310</small></td>
+                <td><span class="status-badge status-active">✅ Aktif</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-IDR-0124')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-MJA-0041</code></td>
+                <td>Jl. Raya Majasari</td>
+                <td>Sliyeg</td>
+                <td>LED 40W</td>
+                <td>40</td>
+                <td>Besi Galvanis 6m</td>
+                <td><small>-6.5012, 108.2145</small></td>
+                <td><span class="status-badge status-mati">🔴 Mati</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-MJA-0041')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-KRS-0019</code></td>
+                <td>Jl. Baru Karangampel</td>
+                <td>Karangampel</td>
+                <td>LED 80W</td>
+                <td>80</td>
+                <td>Ornamen 8m</td>
+                <td><small>-6.3590, 108.4812</small></td>
+                <td><span class="status-badge status-active">✅ Aktif</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-KRS-0019')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+              <tr>
+                <td><code>PJU-KDK-0055</code></td>
+                <td>Jl. Paoman Barat</td>
+                <td>Indramayu</td>
+                <td>Solar Panel 60W</td>
+                <td>60</td>
+                <td>Besi Bulat 7m</td>
+                <td><small>-6.3405, 108.3120</small></td>
+                <td><span class="status-badge status-active">✅ Aktif</span></td>
+                <td>
+                  <button class="btn btn-info btn-sm" onclick="showPJUDetail('PJU-KDK-0055')">👁️</button>
+                  <button class="btn btn-warning btn-sm">✏️</button>
+                  <button class="btn btn-danger btn-sm">🗑️</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:15px;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;color:#666;">Menampilkan 10 dari 2.847 data</div>
+          <div style="display:flex;gap:5px;">
+            <button class="btn btn-outline btn-sm">◀ Prev</button>
+            <button class="btn btn-primary btn-sm">1</button>
+            <button class="btn btn-outline btn-sm">2</button>
+            <button class="btn btn-outline btn-sm">3</button>
+            <button class="btn btn-outline btn-sm">...</button>
+            <button class="btn btn-outline btn-sm">285</button>
+            <button class="btn btn-outline btn-sm">Next ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== TAGGING METER ======== -->
+  <div class="page" id="page-meter">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">⚡</div>
+        Tagging Meter PLN
+      </h2>
+      <button class="btn btn-primary" onclick="openMeterModal()">
+        <i class="fas fa-plus"></i> Tag Meter Baru
+      </button>
+    </div>
+
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle"></i>
+      <strong>Info:</strong> Sistem tagging meter menghubungkan titik PJU dengan nomor meter PLN untuk monitoring konsumsi daya dan tagihan listrik.
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+      <div class="stat-card">
+        <div class="stat-icon bg-purple"><i class="fas fa-tachometer-alt"></i></div>
+        <div class="stat-info"><div class="number" style="color:#9b59b6">342</div><div class="label">Total Meter</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-plug"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--accent)">318</div><div class="label">Meter Aktif</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-bolt"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--warning)">247.8</div><div class="label">Total kWh/hari</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-red"><i class="fas fa-money-bill"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--danger)">487</div><div class="label">Juta Rp/Bulan</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-link"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--info)">8.3</div><div class="label">Rata² PJU/Meter</div></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-list"></i> Daftar Meter PLN</h3>
+        </div>
+        <div class="card-body">
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="🔍 Cari ID Meter, Lokasi...">
+          </div>
+          <div id="meterList">
+            <div class="meter-card" style="margin-bottom:12px">
+              <div class="meter-header">
+                <div>
+                  <span class="meter-id">MTR-2025-001</span>
+                  <div style="font-size:13px;font-weight:700;margin-top:5px">Jl. Sudirman - Kec. Indramayu</div>
+                  <div style="font-size:12px;color:#888">No. PLN: 541721001234 | 8 Titik PJU</div>
+                </div>
+                <span class="status-badge status-active">✅ Aktif</span>
+              </div>
+              <div class="meter-readings">
+                <div class="meter-reading">
+                  <div class="val">42.5</div>
+                  <div class="unit">kWh/hari</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">1.275</div>
+                  <div class="unit">kWh/bln</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">1,9 Jt</div>
+                  <div class="unit">Rp/bln</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;">
+                <button class="btn btn-info btn-sm">📊 Grafik</button>
+                <button class="btn btn-warning btn-sm">✏️ Edit</button>
+                <button class="btn btn-primary btn-sm">🔗 Lihat PJU</button>
+              </div>
+            </div>
+
+            <div class="meter-card" style="margin-bottom:12px">
+              <div class="meter-header">
+                <div>
+                  <span class="meter-id">MTR-2025-002</span>
+                  <div style="font-size:13px;font-weight:700;margin-top:5px">Jl. Soekarno-Hatta - Kec. Indramayu</div>
+                  <div style="font-size:12px;color:#888">No. PLN: 541721005678 | 12 Titik PJU</div>
+                </div>
+                <span class="status-badge status-active">✅ Aktif</span>
+              </div>
+              <div class="meter-readings">
+                <div class="meter-reading">
+                  <div class="val">68.4</div>
+                  <div class="unit">kWh/hari</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">2.052</div>
+                  <div class="unit">kWh/bln</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">3,1 Jt</div>
+                  <div class="unit">Rp/bln</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;">
+                <button class="btn btn-info btn-sm">📊 Grafik</button>
+                <button class="btn btn-warning btn-sm">✏️ Edit</button>
+                <button class="btn btn-primary btn-sm">🔗 Lihat PJU</button>
+              </div>
+            </div>
+
+            <div class="meter-card" style="margin-bottom:12px">
+              <div class="meter-header">
+                <div>
+                  <span class="meter-id">MTR-2025-045</span>
+                  <div style="font-size:13px;font-weight:700;margin-top:5px">Jl. Raya Sindang - Kec. Sindang</div>
+                  <div style="font-size:12px;color:#888">No. PLN: 541721009012 | 7 Titik PJU</div>
+                </div>
+                <span class="status-badge status-rusak">⚠️ Anomali</span>
+              </div>
+              <div class="meter-readings">
+                <div class="meter-reading">
+                  <div class="val" style="color:var(--danger)">85.2</div>
+                  <div class="unit">kWh/hari</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">2.556</div>
+                  <div class="unit">kWh/bln</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val" style="color:var(--danger)">3,8 Jt</div>
+                  <div class="unit">Rp/bln</div>
+                </div>
+              </div>
+              <div class="alert alert-warning" style="margin-top:10px;padding:8px;font-size:12px;">
+                ⚠️ Konsumsi daya melebihi normal 42%. Kemungkinan ada beban tidak terdaftar.
+              </div>
+              <div style="margin-top:8px;display:flex;gap:8px;">
+                <button class="btn btn-info btn-sm">📊 Grafik</button>
+                <button class="btn btn-danger btn-sm">🔍 Investigasi</button>
+                <button class="btn btn-primary btn-sm">🔗 Lihat PJU</button>
+              </div>
+            </div>
+
+            <div class="meter-card" style="margin-bottom:12px">
+              <div class="meter-header">
+                <div>
+                  <span class="meter-id">MTR-2025-112</span>
+                  <div style="font-size:13px;font-weight:700;margin-top:5px">Jl. Ahmad Yani - Kec. Jatibarang</div>
+                  <div style="font-size:12px;color:#888">No. PLN: 541721012345 | 10 Titik PJU</div>
+                </div>
+                <span class="status-badge status-active">✅ Aktif</span>
+              </div>
+              <div class="meter-readings">
+                <div class="meter-reading">
+                  <div class="val">55.1</div>
+                  <div class="unit">kWh/hari</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">1.653</div>
+                  <div class="unit">kWh/bln</div>
+                </div>
+                <div class="meter-reading">
+                  <div class="val">2,5 Jt</div>
+                  <div class="unit">Rp/bln</div>
+                </div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;">
+                <button class="btn btn-info btn-sm">📊 Grafik</button>
+                <button class="btn btn-warning btn-sm">✏️ Edit</button>
+                <button class="btn btn-primary btn-sm">🔗 Lihat PJU</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-bar"></i> Konsumsi Daya per Kecamatan</h3>
+          </div>
+          <div class="card-body">
+            <div class="chart-container chart-sm">
+              <canvas id="chartMeter"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-map-pin"></i> Mapping Meter → PJU</h3>
+          </div>
+          <div class="card-body">
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID Meter</th>
+                    <th>Jml PJU</th>
+                    <th>Total Daya</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>MTR-001</code></td><td>8</td><td>640W</td><td><span class="status-badge status-active">Normal</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>MTR-002</code></td><td>12</td><td>1.200W</td><td><span class="status-badge status-active">Normal</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>MTR-045</code></td><td>7</td><td>560W</td><td><span class="status-badge status-rusak">Anomali</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>MTR-112</code></td><td>10</td><td>800W</td><td><span class="status-badge status-active">Normal</span></td>
+                  </tr>
+                  <tr>
+                    <td><code>MTR-225</code></td><td>5</td><td>400W</td><td><span class="status-badge status-active">Normal</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== LAPORAN PJU MATI ======== -->
+  <div class="page" id="page-laporan">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">🔴</div>
+        Laporan PJU Mati dari Warga
+      </h2>
+      <button class="btn btn-danger" onclick="openLaporanModal()">
+        <i class="fas fa-plus"></i> Laporkan PJU Mati
+      </button>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+      <div class="stat-card">
+        <div class="stat-icon bg-red"><i class="fas fa-exclamation-circle"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--danger)">47</div><div class="label">Total Laporan</div><div class="sub">Bulan ini</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(231,76,60,0.15);color:var(--danger)"><i class="fas fa-hourglass"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--danger)">12</div><div class="label">Belum Ditangani</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-spinner"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--warning)">18</div><div class="label">Sedang Diproses</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-check-double"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--accent)">17</div><div class="label">Selesai</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-clock"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--info)">2.4</div><div class="label">Rata² Hari Selesai</div></div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger">
+      <i class="fas fa-bell"></i>
+      <strong>Prioritas Tinggi:</strong> 3 laporan sudah >5 hari belum ditindaklanjuti. Segera ditangani!
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3><i class="fas fa-clipboard-list"></i> Daftar Laporan Warga</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-success btn-sm"><i class="fas fa-file-excel"></i> Export</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="filter-chips">
+          <span class="chip active" onclick="filterLaporan('all',this)">Semua (47)</span>
+          <span class="chip" onclick="filterLaporan('baru',this)">🔴 Baru (12)</span>
+          <span class="chip" onclick="filterLaporan('proses',this)">⏳ Diproses (18)</span>
+          <span class="chip" onclick="filterLaporan('selesai',this)">✅ Selesai (17)</span>
+        </div>
+
+        <div id="laporanList">
+          <div class="card" style="border-left:4px solid var(--danger);margin-bottom:12px;" data-status="baru">
+            <div class="card-body" style="padding:15px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                    <code style="font-size:12px;">LAP-2025-0047</code>
+                    <span class="status-badge status-mati">🔴 Belum Ditangani</span>
+                    <span style="font-size:11px;background:#ffeaea;color:var(--danger);padding:2px 8px;border-radius:10px;font-weight:700;">⚡ PRIORITAS TINGGI</span>
+                  </div>
+                  <div style="font-weight:700;font-size:15px;">Jl. Jend. Sudirman No.23, Indramayu</div>
+                  <div style="font-size:13px;color:#666;margin-top:3px;">🆔 PJU: PJU-IDR-0023 | 📍 -6.3318, 108.3245</div>
+                  <div style="font-size:13px;margin-top:5px;">📝 <em>"Lampu PJU di depan rumah saya sudah mati 6 hari, sangat gelap dan tidak aman"</em></div>
+                  <div style="font-size:12px;color:#888;margin-top:5px;">👤 Budi Santoso | 📞 081234567890 | 🕐 2025-06-08 20:30</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:140px;">
+                  <button class="btn btn-warning btn-sm" onclick="updateStatus('LAP-2025-0047','proses')">⏳ Proses</button>
+                  <button class="btn btn-success btn-sm" onclick="updateStatus('LAP-2025-0047','selesai')">✅ Selesai</button>
+                  <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="border-left:4px solid var(--danger);margin-bottom:12px;" data-status="baru">
+            <div class="card-body" style="padding:15px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                    <code style="font-size:12px;">LAP-2025-0046</code>
+                    <span class="status-badge status-mati">🔴 Belum Ditangani</span>
+                  </div>
+                  <div style="font-weight:700;font-size:15px;">Jl. Raya Sindang KM 2</div>
+                  <div style="font-size:13px;color:#666;margin-top:3px;">🆔 PJU: PJU-SDG-0011 | 📍 -6.3412, 108.3089</div>
+                  <div style="font-size:13px;margin-top:5px;">📝 <em>"3 lampu PJU berturut-turut mati, jalan sangat gelap terutama malam hari"</em></div>
+                  <div style="font-size:12px;color:#888;margin-top:5px;">👤 Sri Wahyuni | 📞 087654321098 | 🕐 2025-06-09 19:15</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:140px;">
+                  <button class="btn btn-warning btn-sm">⏳ Proses</button>
+                  <button class="btn btn-success btn-sm">✅ Selesai</button>
+                  <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="border-left:4px solid var(--warning);margin-bottom:12px;" data-status="proses">
+            <div class="card-body" style="padding:15px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                    <code style="font-size:12px;">LAP-2025-0041</code>
+                    <span class="status-badge status-proses">⏳ Sedang Diproses</span>
+                  </div>
+                  <div style="font-weight:700;font-size:15px;">Jl. Ahmad Yani No.55, Jatibarang</div>
+                  <div style="font-size:13px;color:#666;margin-top:3px;">🆔 PJU: PJU-JTB-0055 | 📍 -6.4721, 108.2934</div>
+                  <div style="font-size:13px;margin-top:5px;">📝 <em>"Lampu PJU kap-nya pecah kena tersambar petir, tiang masih bagus"</em></div>
+                  <div style="font-size:12px;color:#888;margin-top:5px;">👤 Hendra Wijaya | 📞 089876543210 | 🕐 2025-06-07 08:20</div>
+                  <div style="font-size:12px;color:var(--warning);margin-top:5px;">🔧 Teknisi: Tim 2 Jatibarang | Estimasi selesai: 11 Jun 2025</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:140px;">
+                  <button class="btn btn-success btn-sm">✅ Selesai</button>
+                  <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+                  <button class="btn btn-outline btn-sm">💬 Update</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="border-left:4px solid var(--accent);margin-bottom:12px;" data-status="selesai">
+            <div class="card-body" style="padding:15px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                    <code style="font-size:12px;">LAP-2025-0038</code>
+                    <span class="status-badge status-active">✅ Selesai</span>
+                  </div>
+                  <div style="font-weight:700;font-size:15px;">Jl. Pahlawan No.10, Indramayu</div>
+                  <div style="font-size:13px;color:#666;margin-top:3px;">🆔 PJU: PJU-IDR-0087 | 📍 -6.3280, 108.3310</div>
+                  <div style="font-size:13px;margin-top:5px;">📝 <em>"Lampu PJU mati, kabel putus kena angin kencang"</em></div>
+                  <div style="font-size:12px;color:#888;margin-top:5px;">👤 Dewi Lestari | 🕐 2025-06-05 | ✅ Selesai: 2025-06-07</div>
+                  <div style="font-size:12px;color:var(--accent);margin-top:5px;">✅ Kabel diganti, lampu sudah menyala kembali. Waktu penanganan: 2 hari</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:140px;">
+                  <button class="btn btn-info btn-sm">📋 Detail</button>
+                  <button class="btn btn-outline btn-sm">⭐ Rating</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="border-left:4px solid var(--danger);margin-bottom:12px;" data-status="baru">
+            <div class="card-body" style="padding:15px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                    <code style="font-size:12px;">LAP-2025-0045</code>
+                    <span class="status-badge status-mati">🔴 Belum Ditangani</span>
+                  </div>
+                  <div style="font-weight:700;font-size:15px;">Jl. Raya Haurgeulis, depan SDN 1</div>
+                  <div style="font-size:13px;color:#666;margin-top:3px;">🆔 PJU: PJU-HGS-0015 | 📍 -6.5123, 108.4521</div>
+                  <div style="font-size:13px;margin-top:5px;">📝 <em>"PJU di depan sekolah mati sudah 2 minggu, anak-anak pulang sore jadi tidak aman"</em></div>
+                  <div style="font-size:12px;color:#888;margin-top:5px;">👤 Komite SDN 1 Haurgeulis | 🕐 2025-06-09 14:00</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:140px;">
+                  <button class="btn btn-warning btn-sm">⏳ Proses</button>
+                  <button class="btn btn-success btn-sm">✅ Selesai</button>
+                  <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== PJU ILEGAL ======== -->
+  <div class="page" id="page-ilegal">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">⚠️</div>
+        Prediksi & Deteksi PJU Ilegal
+      </h2>
+      <button class="btn btn-warning" onclick="openIlegalModal()">
+        <i class="fas fa-search"></i> Lapor Dugaan Ilegal
+      </button>
+    </div>
+
+    <div class="alert alert-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      <strong>Sistem AI Prediksi:</strong> Algoritma analisis anomali konsumsi daya + verifikasi lapangan mendeteksi indikasi PJU tidak terdaftar.
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:rgba(155,89,182,0.15);color:#9b59b6"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info"><div class="number" style="color:#9b59b6">7</div><div class="label">Total Indikasi</div><div class="sub">Perlu verifikasi</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-red"><i class="fas fa-times-circle"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--danger)">3</div><div class="label">Risiko Tinggi</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-minus-circle"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--warning)">3</div><div class="label">Risiko Sedang</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--accent)">1</div><div class="label">Risiko Rendah</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-bolt"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--info)">+38%</div><div class="label">Anomali Konsumsi</div></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <h3>⚠️ Daftar Indikasi PJU Ilegal</h3>
+            <div style="display:flex;gap:8px;">
+              <span style="font-size:12px;color:#888;align-self:center;">Update: 10 Jun 2025</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="ilegal-card">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <code style="font-size:12px;background:#f9f0ff;color:#9b59b6;padding:2px 7px;border-radius:4px;">ILG-2025-001</code>
+                  <div style="font-weight:700;margin-top:5px;">Kawasan Industri Indramayu, Blok C</div>
+                  <div style="font-size:12px;color:#888;">Kec. Indramayu | 📍 -6.3150, 108.3400</div>
+                </div>
+                <span style="font-size:11px;background:rgba(231,76,60,0.15);color:var(--danger);padding:3px 10px;border-radius:10px;font-weight:700;">🔴 RISIKO TINGGI</span>
+              </div>
+              <div style="font-size:13px;margin-bottom:8px;">📋 <strong>Indikator:</strong> Konsumsi +87% dari estimasi, tidak ada dalam database PJU, tidak ada tag meter PLN resmi</div>
+              <div class="risk-meter">
+                <span style="font-size:12px;font-weight:700;min-width:80px;">Risiko: 87%</span>
+                <div class="risk-bar"><div class="risk-fill risk-high" style="width:87%"></div></div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-danger btn-sm">🚨 Tindak Lanjut</button>
+                <button class="btn btn-info btn-sm">📍 Peta</button>
+                <button class="btn btn-warning btn-sm">📋 Verifikasi</button>
+              </div>
+            </div>
+
+            <div class="ilegal-card">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <code style="font-size:12px;background:#f9f0ff;color:#9b59b6;padding:2px 7px;border-radius:4px;">ILG-2025-002</code>
+                  <div style="font-weight:700;margin-top:5px;">Jl. Perumahan Baru Sindang Permai</div>
+                  <div style="font-size:12px;color:#888;">Kec. Sindang | 📍 -6.3550, 108.3120</div>
+                </div>
+                <span style="font-size:11px;background:rgba(231,76,60,0.15);color:var(--danger);padding:3px 10px;border-radius:10px;font-weight:700;">🔴 RISIKO TINGGI</span>
+              </div>
+              <div style="font-size:13px;margin-bottom:8px;">📋 <strong>Indikator:</strong> Lampu menyala siang hari, tidak ada izin resmi, konsumsi +65%</div>
+              <div class="risk-meter">
+                <span style="font-size:12px;font-weight:700;min-width:80px;">Risiko: 76%</span>
+                <div class="risk-bar"><div class="risk-fill risk-high" style="width:76%"></div></div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-danger btn-sm">🚨 Tindak Lanjut</button>
+                <button class="btn btn-info btn-sm">📍 Peta</button>
+                <button class="btn btn-warning btn-sm">📋 Verifikasi</button>
+              </div>
+            </div>
+
+            <div class="ilegal-card">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <code style="font-size:12px;background:#f9f0ff;color:#9b59b6;padding:2px 7px;border-radius:4px;">ILG-2025-003</code>
+                  <div style="font-weight:700;margin-top:5px;">Jl. Raya Lohbener KM 5</div>
+                  <div style="font-size:12px;color:#888;">Kec. Lohbener | 📍 -6.3812, 108.2234</div>
+                </div>
+                <span style="font-size:11px;background:rgba(243,156,18,0.15);color:var(--warning);padding:3px 10px;border-radius:10px;font-weight:700;">🟡 RISIKO SEDANG</span>
+              </div>
+              <div style="font-size:13px;margin-bottom:8px;">📋 <strong>Indikator:</strong> Tipe tiang berbeda dari standar Pemkab, tidak ada nomor registrasi</div>
+              <div class="risk-meter">
+                <span style="font-size:12px;font-weight:700;min-width:80px;">Risiko: 58%</span>
+                <div class="risk-bar"><div class="risk-fill risk-medium" style="width:58%"></div></div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-warning btn-sm">📋 Verifikasi Lapangan</button>
+                <button class="btn btn-info btn-sm">📍 Peta</button>
+              </div>
+            </div>
+
+            <div class="ilegal-card">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <code style="font-size:12px;background:#f9f0ff;color:#9b59b6;padding:2px 7px;border-radius:4px;">ILG-2025-004</code>
+                  <div style="font-weight:700;margin-top:5px;">Perumahan Griya Indah, Jatibarang</div>
+                  <div style="font-size:12px;color:#888;">Kec. Jatibarang | 📍 -6.4800, 108.2900</div>
+                </div>
+                <span style="font-size:11px;background:rgba(39,174,96,0.15);color:var(--accent);padding:3px 10px;border-radius:10px;font-weight:700;">🟢 RISIKO RENDAH</span>
+              </div>
+              <div style="font-size:13px;margin-bottom:8px;">📋 <strong>Indikator:</strong> Dilaporkan warga, kemungkinan PJU developer belum diserahterimakan ke Pemkab</div>
+              <div class="risk-meter">
+                <span style="font-size:12px;font-weight:700;min-width:80px;">Risiko: 30%</span>
+                <div class="risk-bar"><div class="risk-fill risk-low" style="width:30%"></div></div>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-success btn-sm">📂 Cek Dokumen</button>
+                <button class="btn btn-info btn-sm">📍 Peta</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-brain"></i> Metode Deteksi AI</h3>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="padding:12px;background:#f8f9fa;border-radius:8px;border-left:4px solid var(--info);">
+                <div style="font-weight:700;font-size:13px;margin-bottom:5px;">📊 Analisis Anomali Konsumsi Daya</div>
+                <div style="font-size:12px;color:#666;">Membandingkan konsumsi kWh aktual meter dengan estimasi berdasarkan jumlah & daya PJU terdaftar. Selisih >30% = anomali.</div>
+              </div>
+              <div style="padding:12px;background:#f8f9fa;border-radius:8px;border-left:4px solid var(--warning);">
+                <div style="font-weight:700;font-size:13px;margin-bottom:5px;">🗺️ Verifikasi Database & Peta</div>
+                <div style="font-size:12px;color:#666;">Cross-check titik PJU fisik di lapangan vs data dalam sistem. Titik yang ada fisiknya tapi tidak di database = indikasi ilegal.</div>
+              </div>
+              <div style="padding:12px;background:#f8f9fa;border-radius:8px;border-left:4px solid #9b59b6;">
+                <div style="font-weight:700;font-size:13px;margin-bottom:5px;">👥 Laporan Crowdsourcing Warga</div>
+                <div style="font-size:12px;color:#666;">Laporan dari warga melalui forum/form pengaduan yang menginformasikan keberadaan PJU tidak resmi di lingkungannya.</div>
+              </div>
+              <div style="padding:12px;background:#f8f9fa;border-radius:8px;border-left:4px solid var(--danger);">
+                <div style="font-weight:700;font-size:13px;margin-bottom:5px;">🔍 Inspeksi Visual & Fisik</div>
+                <div style="font-size:12px;color:#666;">Petugas lapangan melakukan inspeksi tiang, kabel, dan plat nomor PJU untuk verifikasi keabsahan.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Statistik Indikasi Ilegal</h3>
+          </div>
+          <div class="card-body">
+            <div class="chart-container chart-sm">
+              <canvas id="chartIlegal"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== ZONA BELUM PJU ======== -->
+  <div class="page" id="page-nopju">
+    <div class="page-header">
+      <h2>
+        <div class="ph-icon">🌑</div>
+        Zona Belum Terpasang PJU
+      </h2>
+      <button class="btn btn-primary" onclick="openNoPJUModal()">
+        <i class="fas fa-plus"></i> Tambah Zona
+      </button>
+    </div>
+
+    <div class="alert alert-info">
+      <i class="fas fa-info-circle"></i>
+      <strong>Informasi:</strong> Data zona gelap (belum terpasang PJU) dikumpulkan dari survei lapangan, laporan warga, dan analisis citra satelit. Total <strong>47 zona</strong> teridentifikasi membutuhkan PJU.
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#1a1a2e22;color:#1a1a2e"><i class="fas fa-moon"></i></div>
+        <div class="stat-info"><div class="number" style="color:#1a1a2e">47</div><div class="label">Total Zona Gelap</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-red"><i class="fas fa-fire"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--danger)">15</div><div class="label">Prioritas Tinggi</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange"><i class="fas fa-road"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--warning)">3.847</div><div class="label">Meter Jalan Gelap</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-blue"><i class="fas fa-users"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--info)">128.450</div><div class="label">Warga Terdampak</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-green"><i class="fas fa-lightbulb"></i></div>
+        <div class="stat-info"><div class="number" style="color:var(--accent)">542</div><div class="label">Est. Titik Dibutuhkan</div></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>🌑 Daftar Zona Tanpa PJU</h3>
+          <div class="filter-chips" style="margin:0">
+            <span class="chip active" id="chipNoPJU-all" onclick="filterNoPJU('all')">Semua</span>
+            <span class="chip" id="chipNoPJU-tinggi" onclick="filterNoPJU('tinggi')">🔴 Tinggi</span>
+            <span class="chip" id="chipNoPJU-sedang" onclick="filterNoPJU('sedang')">🟡 Sedang</span>
+            <span class="chip" id="chipNoPJU-rendah" onclick="filterNoPJU('rendah')">🟢 Rendah</span>
+          </div>
+        </div>
+        <div class="card-body" id="noPJUList">
+          <div class="nopju-card" data-prio="tinggi">
+            <div class="nopju-header">
+              <div>
+                <div style="font-weight:700;">Desa Karanganyar, Kec. Indramayu</div>
+                <div style="font-size:12px;color:#888;">Jl. Desa Karanganyar RT.01-05 | Panjang: ±850m</div>
+              </div>
+              <span class="priority-badge p-high">🔴 Prioritas Tinggi</span>
+            </div>
+            <div style="display:flex;gap:15px;font-size:12px;color:#666;flex-wrap:wrap;margin-bottom:10px;">
+              <span>👥 12.500 warga terdampak</span>
+              <span>💡 Est. 17 titik PJU</span>
+              <span>🏫 Dekat Sekolah & Puskesmas</span>
+              <span>🚗 Jalan Kabupaten</span>
+            </div>
+            <div style="font-size:12px;color:#888;margin-bottom:10px;">📋 Alasan Prioritas: Area padat penduduk, akses menuju fasilitas kesehatan, tingkat kriminalitas relatif tinggi di malam hari</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="showPage('permintaan')">📋 Buat Permintaan</button>
+              <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+              <button class="btn btn-success btn-sm">📊 Hitung RAB</button>
+            </div>
+          </div>
+
+          <div class="nopju-card" data-prio="tinggi">
+            <div class="nopju-header">
+              <div>
+                <div style="font-weight:700;">Jl. Raya Pasekan, Kec. Pasekan</div>
+                <div style="font-size:12px;color:#888;">Segmen Jembatan - Alun-alun | Panjang: ±1.200m</div>
+              </div>
+              <span class="priority-badge p-high">🔴 Prioritas Tinggi</span>
+            </div>
+            <div style="display:flex;gap:15px;font-size:12px;color:#666;flex-wrap:wrap;margin-bottom:10px;">
+              <span>👥 8.200 warga terdampak</span>
+              <span>💡 Est. 24 titik PJU</span>
+              <span>🚛 Jalan Provinsi</span>
+              <span>⚠️ Rawan Kecelakaan</span>
+            </div>
+            <div style="font-size:12px;color:#888;margin-bottom:10px;">📋 Alasan Prioritas: Jalan provinsi dengan volume kendaraan tinggi, sudah terjadi 3 kecelakaan malam dalam 6 bulan terakhir</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="showPage('permintaan')">📋 Buat Permintaan</button>
+              <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+              <button class="btn btn-success btn-sm">📊 Hitung RAB</button>
+            </div>
+          </div>
+
+          <div class="nopju-card" data-prio="sedang">
+            <div class="nopju-header">
+              <div>
+                <div style="font-weight:700;">Perumahan Bumi Indramayu Permai, Sindang</div>
+                <div style="font-size:12px;color:#888;">Cluster B & C | Panjang: ±600m</div>
+              </div>
+              <span class="priority-badge p-medium">🟡 Prioritas Sedang</span>
+            </div>
+            <div style="display:flex;gap:15px;font-size:12px;color:#666;flex-wrap:wrap;margin-bottom:10px;">
+              <span>👥 3.800 warga terdampak</span>
+              <span>💡 Est. 12 titik PJU</span>
+              <span>🏘️ Perumahan Baru</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="showPage('permintaan')">📋 Buat Permintaan</button>
+              <button class="btn btn-info btn-sm">📍 Lihat Peta</button>
+            </div>
+          </div>
+
+          <div class="nopju-card" data-prio="sedang">
+            <div class="nopju-header">
+              <div>
+                <div style="font-weight:700;">Jl. Pesisir Pantai Tirtamaya, Juntinyuat</div>
+                <div style="font-size:12px;color:#888;">Sepanjang kawasan wisata | Panjang: ±2.100m</div>
+              </div>
+              <span class="priority-badge p-medium">🟡 Prioritas Sedang</span>
+            </div>
+            <div style="display:flex;gap:15px;font-size:12px;color:#666;flex-wrap:wrap;margin-bottom:10px;">
+              <span>👥 Kawasan Wisata</span>
+              <span>💡 Est. 42 titik PJU</span>
+              <span>🏖️ Area Pariwisata</span>
+            flex;gap:5px;flex-wrap:wrap;">
+          <button onclick="showPage('titikpju')" style="padding:4px 10px;background:var(--primary);color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">📋 Detail</button>
+          <button onclick="openLaporanModal()" style="padding:4px 10px;background:var(--danger);color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">🔴 Laporan</button>
+        </div>
+      </div>
+    `, { maxWidth: 260 });
+    marker.pjuData = pju;
+    markersLayer.addLayer(marker);
+  });
+}
+
+function filterMap(type) {
+  markersLayer.clearLayers();
+  pjuData.forEach(pju => {
+    let show = false;
+    if (type === 'all') show = true;
+    else if (type === 'aktif' && pju.status === 'aktif') show = true;
+    else if (type === 'mati' && (pju.status === 'mati' || pju.status === 'rusak' || pju.status === 'proses')) show = true;
+    else if (type === 'meter' && pju.status === 'meter') show = true;
+    else if (type === 'ilegal' && pju.status === 'ilegal') show = true;
+    else if (type === 'nopju' && pju.status === 'nopju') show = true;
+    if (show) {
+      const marker = L.marker([pju.lat, pju.lng], { icon: createCustomMarker(pju.status) });
+      marker.bindPopup(`<div style="font-family:Segoe UI,sans-serif;min-width:200px;">
+        <div style="background:${getMarkerColor(pju.status)};color:white;padding:8px 10px;margin:-13px -20px 8px;border-radius:5px 5px 0 0;">
+          <b>${pju.id}</b>
+        </div>
+        <div style="font-size:13px;">📍 ${pju.name}</div>
+        <div style="font-size:12px;color:#888;margin-top:3px;">🏘️ Kec. ${pju.kec} | 💡 ${pju.type}</div>
+      </div>`, { maxWidth: 240 });
+      markersLayer.addLayer(marker);
+    }
+  });
+}
+
+function addPJUMarker() {
+  if (map) {
+    const center = map.getCenter();
+    const marker = L.marker([center.lat, center.lng], { icon: createCustomMarker('aktif'), draggable: true });
+    marker.bindPopup('<b>📍 Titik Baru</b><br><small>Drag untuk pindahkan lokasi</small>').openPopup();
+    markersLayer.addLayer(marker);
+    showSuccessModal('Marker Ditambahkan', 'Drag marker ke posisi yang tepat lalu isi detail di form Data Titik PJU.');
+  }
+}
+
+// =====================
+// CHARTS
+// =====================
+function initCharts() {
+  // Chart Kecamatan
+  const ctxKec = document.getElementById('chartKecamatan');
+  if (ctxKec) {
+    new Chart(ctxKec, {
+      type: 'bar',
+      data: {
+        labels: ['Indramayu','Sindang','Jatibarang','Lohbener','Haurgeulis','Kroya','Sliyeg','Lainnya'],
+        datasets: [
+          { label: 'Aktif', data: [380,255,312,165,140,98,112,1139], backgroundColor: '#27ae60' },
+          { label: 'Mati', data: [22,18,12,20,10,8,9,57], backgroundColor: '#e74c3c' },
+          { label: 'Perbaikan', data: [10,14,10,13,6,5,4,28], backgroundColor: '#f39c12' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: { x: { stacked: true, ticks: { font: { size: 10 } } }, y: { stacked: true } }
+      }
+    });
+  }
+
+  // Chart Status Donut
+  const ctxStatus = document.getElementById('chartStatus');
+  if (ctxStatus) {
+    new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: ['Aktif (2.601)', 'Mati (156)', 'Perbaikan (90)'],
+        datasets: [{
+          data: [2601, 156, 90],
+          backgroundColor: ['#27ae60', '#e74c3c', '#f39c12'],
+          borderWidth: 3, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 15 } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('id-ID')} titik (${((ctx.parsed/2847)*100).toFixed(1)}%)`
+            }
+          }
+        },
+        cutout: '65%'
+      }
+    });
+  }
+
+  // Chart Tren Laporan
+  const ctxTren = document.getElementById('chartTren');
+  if (ctxTren) {
+    new Chart(ctxTren, {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','Mei','Jun'],
+        datasets: [
+          {
+            label: 'Laporan Masuk',
+            data: [32, 28, 41, 35, 44, 47],
+            borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.1)',
+            fill: true, tension: 0.4, pointRadius: 5
+          },
+          {
+            label: 'Selesai Ditangani',
+            data: [30, 25, 38, 33, 40, 30],
+            borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.1)',
+            fill: true, tension: 0.4, pointRadius: 5
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  // Chart Meter
+  const ctxMeter = document.getElementById('chartMeter');
+  if (ctxMeter) {
+    new Chart(ctxMeter, {
+      type: 'bar',
+      data: {
+        labels: ['Indramayu','Sindang','Jatibarang','Lohbener','Haurgeulis','Lainnya'],
+        datasets: [{
+          label: 'kWh/hari',
+          data: [85.2, 62.4, 71.8, 48.3, 35.7, 144.4],
+          backgroundColor: ['#3498db','#9b59b6','#27ae60','#f39c12','#e74c3c','#1abc9c'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'kWh/hari' } } }
+      }
+    });
+  }
+
+  // Chart Ilegal
+  const ctxIlegal = document.getElementById('chartIlegal');
+  if (ctxIlegal) {
+    new Chart(ctxIlegal, {
+      type: 'doughnut',
+      data: {
+        labels: ['Risiko Tinggi (3)', 'Risiko Sedang (3)', 'Risiko Rendah (1)'],
+        datasets: [{
+          data: [3, 3, 1],
+          backgroundColor: ['#e74c3c', '#f39c12', '#27ae60'],
+          borderWidth: 3, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } } },
+        cutout: '60%'
+      }
+    });
+  }
+
+  // Chart NoPJU
+  const ctxNoPJU = document.getElementById('chartNoPJU');
+  if (ctxNoPJU) {
+    new Chart(ctxNoPJU, {
+      type: 'bar',
+      data: {
+        labels: ['Indramayu','Sindang','Jatibarang','Lohbener','Haurgeulis','Pasekan','Cantigi','Lainnya'],
+        datasets: [{
+          label: 'Est. Titik PJU Dibutuhkan',
+          data: [85, 62, 74, 48, 55, 38, 42, 138],
+          backgroundColor: 'rgba(26,60,94,0.75)',
+          borderRadius: 5
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, title: { display: true, text: 'Titik PJU' } } }
+      }
+    });
+  }
+
+  // Chart Permintaan
+  const ctxPerm = document.getElementById('chartPermintaan');
+  if (ctxPerm) {
+    new Chart(ctxPerm, {
+      type: 'horizontalBar',
+      type: 'bar',
+      data: {
+        labels: ['Indramayu','Sindang','Jatibarang','Lohbener','Haurgeulis','Lainnya'],
+        datasets: [
+          { label: 'Disetujui', data: [18, 12, 10, 8, 6, 4], backgroundColor: '#27ae60', borderRadius: 4 },
+          { label: 'Review', data: [8, 6, 7, 5, 4, 4], backgroundColor: '#f39c12', borderRadius: 4 },
+          { label: 'Ditolak', data: [3, 2, 2, 2, 1, 2], backgroundColor: '#e74c3c', borderRadius: 4 }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+        scales: { x: { stacked: true }, y: { stacked: true } }
+      }
+    });
+  }
+}
+
+// =====================
+// MODAL FUNCTIONS
+// =====================
+function openModal(id) {
+  document.getElementById(id).classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('show');
+  document.body.style.overflow = '';
+}
+function openAddPJUModal() { openModal('modalAddPJU'); }
+function openLaporanModal() { openModal('modalLaporan'); }
+function openMeterModal() {
+  showSuccessModal('Form Meter', 'Form tagging meter baru akan segera tersedia. Gunakan tabel di halaman ini untuk sementara.');
+}
+function openIlegalModal() { openModal('modalLaporan'); }
+function openForumModal() { openModal('modalForum'); }
+function openPermintaanModal() {
+  showPage('permintaan');
+  setTimeout(() => { document.querySelector('#page-permintaan .form-control').focus(); }, 500);
+}
+function openNoPJUModal() {
+  showSuccessModal('Tambah Zona Gelap', 'Fitur tambah zona belum terpasang PJU sedang dalam pengembangan.');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) closeModal(this.id);
+  });
+});
+
+// =====================
+// SHOW SUCCESS MODAL
+// =====================
+function showSuccessModal(title, msg) {
+  document.getElementById('suksesTitle').textContent = title;
+  document.getElementById('suksesMsg').textContent = msg;
+  openModal('modalSukses');
+}
+
+// =====================
+// PJU DETAIL MODAL
+// =====================
+const pjuDetails = {
+  'PJU-IDR-0001': {
+    nama: 'Jl. Jend. Sudirman No.1', kec: 'Indramayu', status: 'aktif',
+    jenis: 'LED 80W', tiang: 'Besi Galvanis 7m', meter: 'MTR-2025-001',
+    pasang: '15 Januari 2022', lat: '-6.3318', lng: '108.3243',
+    kondisi: 'Baik', lastCheck: '05 Jun 2025', cat: 'Lampu berfungsi normal, sensor otomatis berjalan baik'
+  },
+  'PJU-IDR-0002': {
+    nama: 'Jl. Soekarno-Hatta Km.3', kec: 'Indramayu', status: 'mati',
+    jenis: 'Sodium HPS 150W', tiang: 'Besi Bulat 9m', meter: 'MTR-2025-002',
+    pasang: '20 Maret 2021', lat: '-6.3295', lng: '108.3201',
+    kondisi: 'Rusak - Lampu Mati', lastCheck: '08 Jun 2025', cat: 'Laporan warga: kabel putus. Menunggu perbaikan Tim 2'
+  },
+  'PJU-JTB-0088': {
+    nama: 'Jl. Ahmad Yani No.12', kec: 'Jatibarang', status: 'rusak',
+    jenis: 'LED 100W', tiang: 'Besi Galvanis 8m', meter: 'MTR-2025-112',
+    pasang: '10 Juli 2023', lat: '-6.4721', lng: '108.2934',
+    kondisi: 'Rusak - Kap Pecah', lastCheck: '07 Jun 2025', cat: 'Kap lampu pecah akibat petir, tiang masih aman'
+  }
+};
+
+function showPJUDetail(id) {
+  const d = pjuDetails[id];
+  if (!d) {
+    showSuccessModal('Detail PJU', 'Detail untuk ' + id + ' akan segera tersedia.');
+    return;
+  }
+  const statusColor = { aktif:'#27ae60', mati:'#e74c3c', rusak:'#e74c3c', proses:'#f39c12' };
+  const statusLabel = { aktif:'✅ Aktif', mati:'🔴 Mati', rusak:'🔧 Rusak', proses:'⏳ Perbaikan' };
+  document.getElementById('detailPJUContent').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:15px;">
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">🆔 ID PJU</div>
+        <div style="font-weight:700;font-family:monospace;">${id}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">📍 Lokasi</div>
+        <div style="font-weight:700;font-size:13px;">${d.nama}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">🏘️ Kecamatan</div>
+        <div style="font-weight:700;">${d.kec}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">🚦 Status</div>
+        <span class="status-badge" style="background:${statusColor[d.status]}22;color:${statusColor[d.status]}">${statusLabel[d.status]}</span>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">💡 Jenis Lampu</div>
+        <div style="font-weight:700;">${d.jenis}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">🏗️ Tiang</div>
+        <div style="font-weight:700;">${d.tiang}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">⚡ ID Meter</div>
+        <div style="font-weight:700;font-family:monospace;">${d.meter}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">📅 Tgl Pasang</div>
+        <div style="font-weight:700;">${d.pasang}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">🌐 Koordinat</div>
+        <div style="font-weight:700;font-size:12px;">${d.lat}, ${d.lng}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">🔍 Kondisi</div>
+        <div style="font-weight:700;font-size:13px;">${d.kondisi}</div>
+      </div>
+      <div style="background:#f8f9fa;padding:12px;border-radius:8px;">
+        <div style="font-size:11px;color:#888;margin-bottom:3px;">📆 Cek Terakhir</div>
+        <div style="font-weight:700;">${d.lastCheck}</div>
+      </div>
+    </div>
+    <div style="background:#fffbea;border:1px solid #ffe58f;padding:12px;border-radius:8px;">
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">📝 Catatan</div>
+      <div style="font-size:13px;">${d.cat}</div>
+    </div>
+    <div style="margin-top:15px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;">🗺️ Mini Peta Lokasi</div>
+      <div id="miniMap" style="height:200px;border-radius:8px;overflow:hidden;border:1px solid #ddd;"></div>
+    </div>
+  `;
+  openModal('modalDetailPJU');
+  setTimeout(() => {
+    const miniMap = L.map('miniMap', { zoomControl: false, dragging: false, scrollWheelZoom: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(miniMap);
+    const latNum = parseFloat(d.lat);
+    const lngNum = parseFloat(d.lng);
+    miniMap.setView([latNum, lngNum], 16);
+    L.marker([latNum, lngNum], { icon: createCustomMarker(d.status) })
+      .addTo(miniMap)
+      .bindPopup(`<b>${id}</b><br>${d.nama}`)
+      .openPopup();
+  }, 300);
+}
+
+// =====================
+// FILTER FUNCTIONS
+// =====================
+function filterPJU(val) {
+  const rows = document.querySelectorAll('#pjuTableBody tr');
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function filterByStatus(val) {
+  const rows = document.querySelectorAll('#pjuTableBody tr');
+  rows.forEach(row => {
+    if (!val) { row.style.display = ''; return; }
+    const text = row.textContent;
+    row.style.display = text.includes(val) ? '' : 'none';
+  });
+}
+
+function filterLaporan(status, el) {
+  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const items = document.querySelectorAll('#laporanList [data-status]');
+  items.forEach(item => {
+    if (status === 'all' || item.dataset.status === status) {
+      item.style.display = '';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+function filterNoPJU(prio) {
+  document.querySelectorAll('[id^="chipNoPJU"]').forEach(c => c.classList.remove('active'));
+  const chip = document.getElementById('chipNoPJU-' + prio);
+  if (chip) chip.classList.add('active');
+  const items = document.querySelectorAll('#noPJUList [data-prio]');
+  items.forEach(item => {
+    item.style.display = (prio === 'all' || item.dataset.prio === prio) ? '' : 'none';
+  });
+}
+
+// =====================
+// TAB SWITCHER
+// =====================
+function switchTab(page, tabId, btn) {
+  const allTabs = document.querySelectorAll(`#page-${page} .tab-content`);
+  const allBtns = document.querySelectorAll(`#page-${page} .tab-btn`);
+  allTabs.forEach(t => t.classList.remove('active'));
+  allBtns.forEach(b => b.classList.remove('active'));
+  const target = document.getElementById(`${page}-tab-${tabId}`);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// =====================
+// STATUS UPDATE
+// =====================
+function updateStatus(id, newStatus) {
+  const statusMap = {
+    proses: { label:'⏳ Sedang Diproses', cls:'status-proses', border:'var(--warning)' },
+    selesai: { label:'✅ Selesai', cls:'status-active', border:'var(--accent)' }
+  };
+  const info = statusMap[newStatus];
+  if (!info) return;
+  const card = document.querySelector(`[data-status]`);
+  // Find the specific card by searching text
+  const allCards = document.querySelectorAll('#laporanList .card');
+  allCards.forEach(c => {
+    if (c.textContent.includes(id)) {
+      c.style.borderLeftColor = info.border;
+      const badge = c.querySelector('.status-badge');
+      if (badge) { badge.className = `status-badge ${info.cls}`; badge.textContent = info.label; }
+      c.dataset.status = newStatus;
+    }
+  });
+  showSuccessModal('Status Diperbarui!', `Laporan ${id} berhasil diubah statusnya menjadi: ${info.label}`);
+}
+
+// =====================
+// FORM SUBMISSIONS
+// =====================
+function savePJU() {
+  closeModal('modalAddPJU');
+  showSuccessModal('PJU Berhasil Ditambahkan! 💡', 'Titik PJU baru telah tersimpan ke database dan akan muncul di peta dalam beberapa saat.');
+}
+
+function submitLaporan() {
+  const idLap = 'LAP-2025-' + String(Math.floor(Math.random() * 9000) + 1000);
+  closeModal('modalLaporan');
+  showSuccessModal('Laporan Terkirim! 🔴', `Nomor tiket Anda: ${idLap}. Tim kami akan menindaklanjuti dalam 1x24 jam. Pantau status di menu Laporan PJU Mati.`);
+}
+
+function submitForum() {
+  closeModal('modalForum');
+  showSuccessModal('Postingan Berhasil! 💬', 'Postingan Anda telah dipublikasikan di Forum PJU Indramayu dan dapat dilihat oleh semua warga.');
+}
+
+function submitPermintaan(e) {
+  e.preventDefault();
+  const noReq = 'PRM-2025-' + String(Math.floor(Math.random() * 900) + 100);
+  showSuccessModal('Permintaan Terkirim! 📋', `Nomor pengajuan Anda: ${noReq}. Tim survei akan menghubungi Anda dalam 7 hari kerja. Pantau status di tabel Riwayat Pengajuan.`);
+}
+
+// =====================
+// LIKE / VOTE
+// =====================
+function likePost(btn) {
+  const span = btn.querySelector('span');
+  if (btn.dataset.liked) {
+    span.textContent = parseInt(span.textContent) - 1;
+    btn.style.color = '';
+    delete btn.dataset.liked;
+  } else {
+    span.textContent = parseInt(span.textContent) + 1;
+    btn.style.color = 'var(--primary)';
+    btn.dataset.liked = '1';
+  }
+}
+
+// =====================
+// GPS LOCATION
+// =====================
+function getLocation() {
+  if (!navigator.geolocation) {
+    alert('Browser Anda tidak mendukung GPS. Masukkan koordinat manual.');
+    return;
+  }
+  const btn = event.target;
+  btn.textContent = '📡 Mengambil lokasi...';
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const latEl = document.getElementById('lat-input');
+      const lngEl = document.getElementById('lng-input');
+      if (latEl) latEl.value = pos.coords.latitude.toFixed(6);
+      if (lngEl) lngEl.value = pos.coords.longitude.toFixed(6);
+      btn.textContent = '✅ Lokasi berhasil diambil!';
+      btn.style.background = 'var(--accent)';
+      setTimeout(() => {
+        btn.textContent = '📱 Ambil Lokasi Saat Ini (GPS)';
+        btn.style.background = '';
+        btn.disabled = false;
+      }, 3000);
+    },
+    err => {
+      btn.textContent = '❌ Gagal, masukkan manual';
+      btn.disabled = false;
+      setTimeout(() => { btn.textContent = '📱 Ambil Lokasi Saat Ini (GPS)'; }, 3000);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+// =====================
+// KEYBOARD SHORTCUTS
+// =====================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.show').forEach(m => {
+      m.classList.remove('show');
+      document.body.style.overflow = '';
+    });
+    document.getElementById('notifPanel').classList.remove('show');
+  }
+});
+
+// =====================
+// SEARCH PJU TABLE
+// =====================
+document.addEventListener('DOMContentLoaded', function() {
+  const searchEl = document.getElementById('searchPJU');
+  if (searchEl) {
+    searchEl.addEventListener('input', function() { filterPJU(this.value); });
+  }
+});
+
+// =====================
+// STAT COUNTER ANIMATION
+// =====================
+function animateCounters() {
+  document.querySelectorAll('.stat-card .number').forEach(el => {
+    const target = parseInt(el.textContent.replace(/[^0-9]/g, ''));
+    if (!target || target < 10) return;
+    let current = 0;
+    const step = Math.ceil(target / 50);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      const suffix = el.textContent.includes('Jt') ? ' Jt' : el.textContent.includes('%') ? '%' : '';
+      el.textContent = current.toLocaleString('id-ID') + suffix;
+      if (current >= target) clearInterval(timer);
+    }, 25);
+  });
+}
+
+// =====================
+// RESPONSIVE SIDEBAR
+// =====================
+window.addEventListener('resize', function() {
+  if (window.innerWidth > 768) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+});
+
+// Click outside sidebar to close on mobile
+document.addEventListener('click', function(e) {
+  const sidebar = document.getElementById('sidebar');
+  const hamburger = document.querySelector('.hamburger');
+  if (window.innerWidth <= 768 &&
+      sidebar.classList.contains('open') &&
+      !sidebar.contains(e.target) &&
+      !hamburger.contains(e.target)) {
+    sidebar.classList.remove('open');
+  }
+});
+
+// =====================
+// INIT ALL
+// =====================
+window.addEventListener('load', function() {
+  initMap();
+  initCharts();
+  setTimeout(animateCounters, 500);
+  console.log('%c🌟 SIPJU Indramayu v2.5.1', 'color:#1a3c5e;font-size:16px;font-weight:bold;');
+  console.log('%cSistem Informasi Penerangan Jalan Umum - Kab. Indramayu', 'color:#f39c12;');
+  console.log('%c© 2025 Dinas PUPR Kabupaten Indramayu', 'color:#27ae60;');
+});
+
+// =====================
+// LIVE NOTIF SIMULATION
+// =====================
+let notifCount = 5;
+setInterval(function() {
+  const rand = Math.random();
+  if (rand > 0.85) {
+    notifCount++;
+    const badge = document.querySelector('.badge-notif');
+    if (badge) badge.textContent = notifCount;
+    const msgs = [
+      '🔴 Laporan baru: PJU mati di Jl. Cimanuk',
+      '⚠️ Anomali konsumsi daya Meter MTR-067',
+      '📋 Permintaan pemasangan baru masuk',
+      '💬 Komentar baru di Forum PJU',
+      '✅ Laporan LAP-2025-0040 selesai ditangani'
+    ];
+    console.log('[SIPJU Notif]', msgs[Math.floor(Math.random() * msgs.length)]);
+  }
+}, 15000);
+</script>
+
+</body>
+</html>
