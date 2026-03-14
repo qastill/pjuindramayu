@@ -1,27 +1,22 @@
-# SIPJU Indramayu v3.1
+# SIPJU Indramayu
+Sistem Informasi Penerangan Jalan Umum - Kabupaten Indramayu
 
-Sistem Informasi Penerangan Jalan Umum Kabupaten Indramayu
+## Tech Stack
+- Frontend: HTML/CSS/JS + Leaflet.js + Chart.js
+- Backend: Supabase (PostgreSQL + Storage)
+- Deploy: Vercel
+- Data: 454 KWH Meter, 1317 titik PJU
 
-## Cara Deploy ke GitHub Pages
+## Setup Supabase
+1. Buka SQL Editor di Supabase Dashboard
+2. Paste isi file `supabase_schema.sql`
+3. Run
 
-Upload 3 file berikut ke satu folder/repository:
-- `index.html`   — Website utama
-- `pju_data.js`  — Data 1.875 titik PJU (dari Excel PLN)
-- `gardu_lines.js` — Data jalur kabel gardu ke PJU
-
-Lalu aktifkan GitHub Pages:
-Settings → Pages → Deploy from branch → main → Save
-
-## Akses
-
-- **Publik** (tidak perlu login): Peta, Lapor PJU, Minta Pasang, Forum
-- **Admin** (login): Dashboard PLN/PUPR → username: admin / password: sipju2025
+## Deploy Vercel
+1. Import repo di vercel.com
+2. Set env: SUPABASE_URL dan SUPABASE_ANON_KEY
+3. Deploy
 
 ## Fitur
-- Peta langsung muncul saat buka website (1.875 titik PJU nyata)
-- Klik marker → foto + detail lengkap (daya, gardu, meter, merk, tahun)
-- Jalur kabel dari gardu ke setiap PJU dalam satu jaringan
-- Lapor PJU bermasalah dengan upload foto
-- Ajukan pasang PJU baru
-- Forum diskusi warga (tanpa login)
-- Dashboard admin (PLN & Dinas PUPR): laporan aktif, konsumsi kWh, indikasi ilegal, zona gelap
+- Masyarakat: Pengaduan, Permohonan, Lapor Ilegal, Peta
+- Admin: Dashboard, Tag PJU/Meter, Data, Prediksi Ilegal
