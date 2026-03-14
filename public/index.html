@@ -129,7 +129,7 @@ var S={tp:0,ak:0,mt:0,td:0,tk:0,te:0,an:0,ul:{},theft:0,totalTag:0};
 METER_DATA.forEach(function(m){
   S.tp+=m.jmlPJU;S.td+=m.totalDaya;S.tk+=m.kwhPerDay;S.te+=m.kwhEst;
   if(m.status==='anomali')S.an++;if(m.tagihanBln===0)S.theft++;
-  m.pjuList.forEach(function(p){if(p.status==='aktif')S.ak++;else S.mt++});
+  m.pjuList.forEach(function(p){if(p[5]===1)S.ak++;else S.mt++});
   S.ul[m.ulp]=(S.ul[m.ulp]||0)+m.jmlPJU;S.totalTag+=m.tagihanBln;
 });S.tk=Math.round(S.tk);S.te=Math.round(S.te);
 
@@ -296,13 +296,13 @@ function rM(f){
       mL.addLayer(mk);
     }
     m.pjuList.forEach(function(p,pi){
-      var sP=f==='all'||(f==='aktif'&&p.status==='aktif')||(f==='mati'&&p.status==='mati')||(f==='ilegal'&&(isA||isTh))||f==='meter';
-      if(cV&&(sP||sM))cL.addLayer(L.polyline([[m.lat,m.lng],[p.lat,p.lng]],{color:isTh?'#dc2626':isA?'#e74c3c':'#3498db',weight:3,opacity:.5,dashArray:'6,8'}));
+      var sP=f==='all'||(f==='aktif'&&p[5]===1)||(f==='mati'&&p[5]!==1)||(f==='ilegal'&&(isA||isTh))||f==='meter';
+      if(cV&&(sP||sM))cL.addLayer(L.polyline([[m.lat,m.lng],[p[1],p[2]]],{color:isTh?'#dc2626':isA?'#e74c3c':'#3498db',weight:3,opacity:.5,dashArray:'6,8'}));
       if(sP){
-        var pc=p.status==='aktif'?'#16a34a':'#dc2626';
+        var pc=p[5]===1?'#16a34a':'#dc2626';
         var pi2=L.divIcon({className:'',html:'<div style="width:14px;height:14px;background:'+pc+';border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>',iconSize:[14,14],iconAnchor:[7,7],popupAnchor:[0,-7]});
-        var pm=L.marker([p.lat,p.lng],{icon:pi2});
-        pm.bindPopup('<div style="font-family:Segoe UI;min-width:200px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-8px -10px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p.id+'</div><img src="'+IMG_PJU+'" style="width:100%;height:70px;object-fit:cover;border-radius:5px;margin-bottom:5px;cursor:pointer" onclick="openPV(\''+IMG_PJU+'\',\'PJU '+p.id+'\')"><div style="font-size:11px;line-height:1.6">🔌 Induk: <b>'+m.id+'</b><br>💡 <b>'+p.jenis+'</b> | ⚡ <b>'+p.daya+'W</b><br>🚦 <b style="color:'+pc+'">'+p.status.toUpperCase()+'</b></div></div>',{maxWidth:220});
+        var pm=L.marker([p[1],p[2]],{icon:pi2});
+        pm.bindPopup('<div style="font-family:Segoe UI;min-width:200px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-8px -10px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p[0]+'</div><img src="'+IMG_PJU+'" style="width:100%;height:70px;object-fit:cover;border-radius:5px;margin-bottom:5px;cursor:pointer" onclick="openPV(\''+IMG_PJU+'\',\'PJU '+p[0]+'\')"><div style="font-size:11px;line-height:1.6">🔌 Induk: <b>'+m.id+'</b><br>💡 <b>'+({LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4])+'</b> | ⚡ <b>'+p[3]+'W</b><br>🚦 <b style="color:'+pc+'">'+(p[5]===1?'AKTIF':'MATI')+'</b></div></div>',{maxWidth:220});
         mL.addLayer(pm);
       }
     });
@@ -324,7 +324,7 @@ window.sGI=function(v){var b=document.getElementById('tp-info');if(!v){b.classNa
 var isLeg=true;window.setL=function(v){isLeg=!!v;document.getElementById('ro-l').className='ro'[0]==='r'?'':'';var a=document.getElementById('ro-l'),b=document.getElementById('ro-i');a.className=v?'sl':'';b.className=v?'':'si'};
 function initTables(){
   var pb=document.getElementById('tPB'),c=0;if(!pb)return;
-  METER_DATA.forEach(function(m){m.pjuList.forEach(function(p){if(c>=250)return;c++;pb.innerHTML+='<tr><td><code style="font-size:9px">'+p.id+'</code></td><td>'+m.gardu+'</td><td style="font-size:9px">'+m.ulp+'</td><td>'+p.daya+'W</td><td>'+p.jenis+'</td><td><span class="sb '+(p.status==='aktif'?'sb-g':'sb-r')+'">'+(p.status==='aktif'?'✅':'🔴')+'</span></td></tr>'})});
+  METER_DATA.forEach(function(m){m.pjuList.forEach(function(p){if(c>=250)return;c++;pb.innerHTML+='<tr><td><code style="font-size:9px">'+p[0]+'</code></td><td>'+m.gardu+'</td><td style="font-size:9px">'+m.ulp+'</td><td>'+p[3]+'W</td><td>'+({LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4])+'</td><td><span class="sb '+(p[5]===1?'sb-g':'sb-r')+'">'+(p[5]===1?'✅':'🔴')+'</span></td></tr>'})});
   document.getElementById('tPI').textContent=c+'/'+S.tp;
   var mb=document.getElementById('tMB');if(!mb)return;
   METER_DATA.slice(0,100).forEach(function(m){var isTh=m.tagihanBln===0;mb.innerHTML+='<tr'+(isTh?' style="background:#fef2f2"':m.status==='anomali'?' style="background:#faf5ff"':'')+'><td><code style="font-size:9px">'+m.id+'</code></td><td>'+m.gardu+'</td><td style="font-size:9px">'+m.ulp+'</td><td><b>'+m.jmlPJU+'</b></td><td>'+(m.totalDaya/1e3).toFixed(1)+'kW</td><td'+(isTh?' style="color:#dc2626;font-weight:700"':'')+'>Rp'+(m.tagihanBln>0?(m.tagihanBln/1e6).toFixed(1)+'Jt':'0⚠️')+'</td><td><span class="sb '+(isTh?'sb-r':m.status==='anomali'?'sb-p':'sb-g')+'">'+(isTh?'🔴Rp0':m.status==='anomali'?'⚠️+'+m.anomaliPct+'%':'✅')+'</span></td></tr>'});
