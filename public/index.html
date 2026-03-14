@@ -143,16 +143,22 @@ function renderPublic(){
     '<div class="si" onclick="sp(\'permohonan\')"><span class="ic">💡</span> Permohonan Pasang PJU</div>'+
     '<div class="si" onclick="sp(\'laporilegal\')"><span class="ic">⚠️</span> Lapor PJU Ilegal</div>'+
     '<div class="si" onclick="sp(\'petapublik\')"><span class="ic">🗺️</span> Peta PJU</div>'+
+    '<div class="si" onclick="sp(\'monpublik\')"><span class="ic">📋</span> Cek Status Aduan</div>'+
+    '<div class="si" onclick="sp(\'forum\')"><span class="ic">💬</span> Forum Warga</div>'+
     '<div style="padding:14px 16px;margin-top:8px;border-top:1px solid #333;font-size:9px;color:#555">© 2025 Dinas PUPR Kab. Indramayu</div></div>';
   
   document.getElementById('mainContent').innerHTML=
     '<div class="pg active" id="pg-public">'+
-      '<div class="public-hero"><div style="font-size:48px;margin-bottom:8px">💡</div><h1>SIPJU Indramayu</h1><p>Sistem Informasi Penerangan Jalan Umum Kab. Indramayu</p><p style="margin-top:8px;opacity:.5">Layanan pengaduan & informasi PJU untuk masyarakat</p></div>'+
+      '<div class="public-hero" style="padding:14px 20px;margin-bottom:12px"><h1 style="font-size:18px">💡 SIPJU Indramayu</h1><p style="font-size:10px">Sistem Informasi Penerangan Jalan Umum — Kab. Indramayu</p></div>'+
+      '<div class="legend-bar" style="margin-bottom:6px"><b>Peta PJU:</b> 🟢Aktif 🔴Mati <span style="color:#e67e22">⚡</span>Meter ━Kabel ⬛Zona Gelap</div>'+
+      '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">🗺️Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴Mati</button><button class="btn btn-info btn-sm" onclick="tC()">🔗Kabel</button><button class="btn btn-sm" style="background:#333;color:#fff" onclick="tZ()">🌑Gelap</button></div>'+
+      '<div id="map-container" style="height:55vh;min-height:300px;margin-bottom:16px"></div>'+
       '<div class="service-grid">'+
-        '<div class="service-card" onclick="sp(\'pengaduan\')"><div class="s-icon">🔴</div><h3>Pengaduan Lampu Mati</h3><p>Laporkan PJU / lampu jalan yang mati, rusak, atau bermasalah di lingkungan Anda</p></div>'+
-        '<div class="service-card" onclick="sp(\'permohonan\')"><div class="s-icon">💡</div><h3>Permohonan Pasang PJU</h3><p>Ajukan pemasangan lampu jalan baru di lokasi yang belum memiliki penerangan</p></div>'+
-        '<div class="service-card" onclick="sp(\'laporilegal\')"><div class="s-icon">⚠️</div><h3>Lapor PJU Ilegal</h3><p>Laporkan PJU yang dicurigai tidak resmi atau pencurian listrik</p></div>'+
-        '<div class="service-card" onclick="sp(\'petapublik\')"><div class="s-icon">🗺️</div><h3>Peta PJU Indramayu</h3><p>Lihat sebaran PJU, KWH Meter, dan zona gelap di seluruh Kab. Indramayu</p></div>'+
+        '<div class="service-card" onclick="sp(\'pengaduan\')"><div class="s-icon">🔴</div><h3>Pengaduan Lampu Mati</h3><p>Laporkan PJU yang mati atau rusak</p></div>'+
+        '<div class="service-card" onclick="sp(\'permohonan\')"><div class="s-icon">💡</div><h3>Permohonan Pasang PJU</h3><p>Ajukan pemasangan PJU baru</p></div>'+
+        '<div class="service-card" onclick="sp(\'laporilegal\')"><div class="s-icon">⚠️</div><h3>Lapor PJU Ilegal</h3><p>Laporkan PJU tidak resmi</p></div>'+
+        '<div class="service-card" onclick="sp(\'monpublik\')"><div class="s-icon">📋</div><h3>Cek Status Aduan</h3><p>Pantau progress pengaduan Anda</p></div>'+
+        '<div class="service-card" onclick="sp(\'forum\')"><div class="s-icon">💬</div><h3>Forum Warga</h3><p>Diskusi & laporan terbuka</p></div>'+
       '</div>'+
       '<div class="card"><div class="cb" style="text-align:center;font-size:12px;color:#888"><i class="fas fa-phone"></i> Dinas PUPR: (0234) 272202 | <i class="fas fa-envelope"></i> pupr@indramayukab.go.id</div></div>'+
     '</div>'+
@@ -207,7 +213,19 @@ function buildLaporIlegal(){
 }
 
 function buildPetaPublik(){
-  return '<div class="pg" id="pg-petapublik"><div class="ph"><h2><span class="phi">🗺️</span> Peta PJU Indramayu</h2></div>'+
+  return '<div class="pg" id="pg-monpublik"><div class="ph"><h2><span class="phi">📋</span> Cek Status Pengaduan & Permohonan</h2></div>'+
+    '<div class="g2"><div class="card"><div class="ch"><h3>🔍 Cek Pengaduan</h3></div><div class="cb"><div style="display:flex;gap:6px"><input class="fc" id="cek-tiket" placeholder="Nomor tiket: ADU-xxx" style="flex:1"><button class="btn btn-primary" onclick="cekTiket()">Cek</button></div><div id="tiket-result" style="margin-top:8px"></div></div></div>'+
+    '<div class="card"><div class="ch"><h3>🔍 Cek Permohonan</h3></div><div class="cb"><div style="display:flex;gap:6px"><input class="fc" id="cek-prm" placeholder="Nomor: PRM-xxx" style="flex:1"><button class="btn btn-primary" onclick="cekPrm()">Cek</button></div><div id="prm-result" style="margin-top:8px"></div></div></div></div>'+
+    '<div class="card"><div class="ch"><h3>📋 Timeline Proses</h3></div><div class="cb" style="font-size:11px"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:22px;height:22px;background:var(--d);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">1</div><div><b>Diterima</b> — konfirmasi 1 jam</div></div><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:22px;height:22px;background:var(--i);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">2</div><div><b>Verifikasi</b> — survei lapangan 1x24 jam</div></div><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><div style="width:22px;height:22px;background:var(--s);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">3</div><div><b>Perbaikan/Proses</b> — 3-14 hari</div></div><div style="display:flex;gap:8px;align-items:center"><div style="width:22px;height:22px;background:var(--a);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">4</div><div><b>Selesai</b> — notifikasi ke pelapor</div></div></div></div></div>'+
+    '<div class="pg" id="pg-forum"><div class="ph"><h2><span class="phi">💬</span> Forum Warga PJU Indramayu</h2></div>'+
+    '<div class="card"><div class="ch"><h3>📝 Tulis Laporan / Diskusi</h3></div><div class="cb">'+
+    '<div class="fg"><label>Nama</label><input class="fc" id="fr-nama" placeholder="Nama Anda"></div>'+
+    '<div class="fg"><label>Kategori</label><select class="fc" id="fr-kat"><option>Laporan</option><option>Pertanyaan</option><option>Usulan</option><option>Info</option></select></div>'+
+    '<div class="fg"><label>Isi</label><textarea class="fc" id="fr-isi" rows="3" placeholder="Tulis laporan, pertanyaan, atau usulan Anda..."></textarea></div>'+
+    '<div class="fg"><label>📷 Foto (opsional)</label><div class="uz" id="uz-forum"><div style="font-size:22px">📷</div><div style="color:#888;font-size:10px">Tambah foto</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-forum\')"></div></div>'+
+    '<button class="btn btn-primary" style="width:100%;padding:10px" onclick="submitForum()">💬 Kirim ke Forum</button></div></div>'+
+    '<div id="forumList"><div style="text-align:center;padding:20px;color:#aaa;font-size:11px">Memuat forum...</div></div></div>'+
+    '<div class="pg" id="pg-petapublik"><div class="ph"><h2><span class="phi">🗺️</span> Peta PJU Indramayu</h2></div>'+
     '<div class="legend-bar"><b>Legenda:</b> <span>🟠 KWH Meter</span> <span>🟢 PJU Aktif</span> <span>🔴 PJU Mati</span> <span style="color:#3498db">━━ Kabel</span> <span>🔴 Pencurian (Rp0)</span> <span>⬛ Zona Gelap</span></div>'+
     '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">🗺️ Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡ Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅ Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴 Mati</button><button class="btn btn-info btn-sm" onclick="tC()">🔗 Kabel</button><button class="btn btn-sm" style="background:#333;color:#fff" onclick="tZ()">🌑 Zona Gelap</button></div>'+
     '<div id="map-container"></div></div>';
@@ -226,7 +244,7 @@ function renderAdmin(){
     '<div class="si" onclick="sp(\'datapju\')"><span class="ic">💡</span> Data PJU <span class="badge green">'+S.tp.toLocaleString('id-ID')+'</span></div>'+
     '<div class="si" onclick="sp(\'datameter\')"><span class="ic">🔌</span> Data Meter</div>'+
     '<div class="st">MONITORING</div>'+
-    '<div class="si" onclick="sp(\'ilegal\')"><span class="ic">⚠️</span> Ilegal/Pencurian <span class="badge">'+(S.an+S.theft)+'</span></div>'+
+    '<div class="si" onclick="sp(\'ilegal\')"><span class="ic">⚠️</span> Indikasi Ilegal <span class="badge">'+(S.an+S.theft)+'</span></div>'+
     '<div class="si" onclick="sp(\'monitoring\')"><span class="ic">📋</span> Monitoring Pengaduan</div>'+
     '<div class="st">PUBLIK</div>'+
     '<div class="si" onclick="renderPublic()"><span class="ic">🏠</span> Kembali ke Publik</div>'+
@@ -256,10 +274,11 @@ function renderAdmin(){
     '<div class="g2"><div class="card"><div class="ch"><h3>📸 Data PJU</h3></div><div class="cb">'+
       '<div class="fg"><label>📷 Foto PJU *</label><div class="uz" id="uz-pju"><div style="font-size:28px">📷</div><div style="color:#888;font-size:11px">Buka kamera HP</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-pju\')"></div></div>'+
       '<div class="fg"><label>📍 GPS *</label><div style="display:flex;gap:6px"><input class="fc" id="tp-lat" placeholder="Lat" inputmode="decimal"><input class="fc" id="tp-lng" placeholder="Lng" inputmode="decimal"></div><button class="btn btn-info btn-sm" style="margin-top:4px;width:100%;padding:8px" onclick="gG(\'tp-lat\',\'tp-lng\',this)">📱 Ambil GPS Otomatis</button></div>'+
-      '<div class="fg"><label>⚡ Induk Meter *</label><select class="fc" id="tp-gardu" onchange="sGI(this.value)"><option value="">-- Pilih --</option></select></div><div id="tp-info" class="mib"></div>'+
+      '<div class="fg"><label>⚡ Induk Meter * (ketik IDPEL/Gardu)</label><input class="fc" id="tp-gardu" list="dl-gardu" placeholder="Ketik ID Pelanggan atau nama gardu..." oninput="sGI(this.value)" autocomplete="off"><datalist id="dl-gardu"></datalist></div><div id="tp-info" class="mib"></div>'+
       '<div class="fg"><label>Status</label><div class="ro"><div class="sl" id="ro-l" onclick="setL(1)">✅ Legal</div><div id="ro-i" onclick="setL(0)">🔴 Ilegal</div></div></div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="fg"><label>Jenis</label><select class="fc" id="tp-j"><option>LED</option><option>HPS</option><option>Solar</option><option>Mercury</option></select></div><div class="fg"><label>Daya(W)</label><input class="fc" type="number" id="tp-d" placeholder="900" inputmode="numeric"></div></div>'+
-      '<button class="btn btn-success" style="width:100%;padding:11px;font-size:13px" onclick="sPJU()">📸 Simpan Tagging</button></div></div>'+
+      '<div class="fg"><label>Lampu ke-</label><div style="display:flex;gap:6px;flex-wrap:wrap"><input class="fc" type="number" id="tp-no" placeholder="No urut" inputmode="numeric" style="width:80px"><span style="font-size:10px;color:#888;align-self:center">dari meter ini (untuk jalur kabel)</span></div></div>'+
+    '<button class="btn btn-success" style="width:100%;padding:11px;font-size:13px" onclick="sPJU()">📸 Simpan Tagging</button></div></div>'+
     '<div><div class="card"><div class="ch"><h3>✅ Hari Ini</h3></div><div class="cb" id="th"><div style="text-align:center;padding:16px;color:#aaa;font-size:11px">Belum ada</div></div></div></div></div></div>'+
     // Tag Meter
     '<div class="pg" id="pg-tagmeter"><div class="ph"><h2><span class="phi">⚡</span> Upload & Tag Meter</h2></div>'+
@@ -274,7 +293,7 @@ function renderAdmin(){
     // Data Meter
     '<div class="pg" id="pg-datameter"><div class="ph"><h2><span class="phi">🔌</span> Data Meter</h2></div><div class="card"><div class="ch"><h3>Daftar</h3></div><div class="cb"><div class="tw"><table><thead><tr><th>Meter</th><th>Gardu</th><th>ULP</th><th>PJU</th><th>Daya</th><th>Tagihan</th><th>Status</th></tr></thead><tbody id="tMB"></tbody></table></div></div></div></div>'+
     // Ilegal
-    '<div class="pg" id="pg-ilegal"><div class="ph"><h2><span class="phi">⚠️</span> Ilegal & Pencurian</h2></div><div class="alert" style="border-color:var(--d);background:rgba(231,76,60,.05);color:#991b1b">🔴 Tagihan Rp 0 = Pencurian (bypass). ⚠️ Anomali >20% = beban tidak terdaftar.</div><div class="sg" id="iS"></div><div class="card"><div class="ch"><h3>Meter Bermasalah</h3></div><div class="cb" id="iL"></div></div></div>'+
+    '<div class="pg" id="pg-ilegal"><div class="ph"><h2><span class="phi">⚠️</span> Indikasi Ilegal</h2></div><div class="alert" style="border-color:var(--d);background:rgba(231,76,60,.05);color:#991b1b">🔴 Tagihan Rp 0 = Pencurian (bypass). ⚠️ Anomali >20% = beban tidak terdaftar.</div><div class="sg" id="iS"></div><div class="card"><div class="ch"><h3>Meter Bermasalah</h3></div><div class="cb" id="iL"></div></div></div>'+
     // Monitoring Pengaduan
     '<div class="pg" id="pg-monitoring"><div class="ph"><h2><span class="phi">📋</span> Monitoring Pengaduan</h2></div>'+
     '<div class="alert">📋 Tracking progress pengaduan dari lapor → verifikasi → perbaikan → selesai</div>'+
@@ -287,18 +306,24 @@ function renderAdmin(){
 }
 
 // ===== SHARED: MAP (OPTIMIZED) =====
-var map,mL,pjuCluster,cL,zL,cV=false,zV=false,curF='all';
+var map,mL,pjuCluster,cL,zL,cV=true,zV=false,curF='all';
 function initMap(){
   var el=document.getElementById('map-container');if(!el)return;
   map=L.map(el,{preferCanvas:true,renderer:L.canvas()}).setView([-6.42,108.28],11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+  var osmLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19});
+  var satLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'});
+  var hybridLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
+  satLayer.addTo(map);hybridLayer.addTo(map);
+  L.control.layers({'🗺️ Peta':osmLayer,'🛰️ Satelit':satLayer},{},{ position:'topright' }).addTo(map);
   mL=L.layerGroup().addTo(map);
   cL=L.layerGroup();
   // Dark zones
   zL=L.layerGroup();
   if(typeof DARK_ZONES!=='undefined')DARK_ZONES.forEach(function(z){
+    // Skip if zone center is in ocean (lat > -6.2 = likely ocean for Indramayu)
+    if(z.lat > -6.15 || z.lng < 107.8 || z.lng > 108.7) return;
     var c=z.prioritas==='tinggi'?'#dc2626':z.prioritas==='sedang'?'#ea580c':'#64748b';
-    L.circle([z.lat,z.lng],{radius:z.radius,color:c,fillColor:c,fillOpacity:.12,weight:2,dashArray:'8,6'}).bindPopup('<div style="font-family:Segoe UI;min-width:180px"><div style="background:'+c+';color:#fff;padding:7px 10px;margin:-10px -12px 7px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">🌑 '+z.id+'</div><b>'+z.nama+'</b><br><span style="font-size:10px;color:#666">Kec.'+z.kec+' | '+z.warga.toLocaleString('id-ID')+' warga | Est.'+z.est_titik+' PJU</span><br><span style="font-size:10px">'+z.alasan+'</span></div>').addTo(zL);
+    L.circle([z.lat,z.lng],{radius:Math.min(z.radius,2000),color:c,fillColor:c,fillOpacity:.12,weight:2,dashArray:'8,6'}).bindPopup('<div style="font-family:Segoe UI;min-width:180px"><div style="background:'+c+';color:#fff;padding:7px 10px;margin:-10px -12px 7px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">🌑 '+z.id+'</div><b>'+z.nama+'</b><br><span style="font-size:10px;color:#666">Kec.'+z.kec+' | '+z.warga.toLocaleString('id-ID')+' warga | Est.'+z.est_titik+' PJU</span><br><span style="font-size:10px">'+z.alasan+'</span></div>').addTo(zL);
   });
   // Show cables only at high zoom
   map.on('zoomend moveend',function(){if(cV)drawCables()});
@@ -404,7 +429,7 @@ function initCharts(){
   if(e2)new Chart(e2,{type:'doughnut',data:{labels:['Aktif ('+S.ak+')','Mati ('+S.mt+')'],datasets:[{data:[S.ak,S.mt],backgroundColor:['#27ae60','#e74c3c'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom'}}}});
   if(e3){var tb=S.totalTag||1296752028;new Chart(e3,{type:'line',data:{labels:['Okt','Nov','Des','Jan','Feb','Mar'],datasets:[{label:'Tagihan (Jt Rp)',data:[Math.round(tb*.95/1e6),Math.round(tb*.97/1e6),Math.round(tb*1.02/1e6),Math.round(tb*.98/1e6),Math.round(tb*1.01/1e6),Math.round(tb/1e6)],borderColor:'#e74c3c',backgroundColor:'rgba(231,76,60,.08)',fill:true,tension:.4,pointRadius:4},{label:'kWh (ribu)',data:[Math.round(tb*.95/1497/1e3),Math.round(tb*.97/1497/1e3),Math.round(tb*1.02/1497/1e3),Math.round(tb*.98/1497/1e3),Math.round(tb*1.01/1497/1e3),Math.round(tb/1497/1e3)],borderColor:'#3498db',backgroundColor:'rgba(52,152,219,.08)',fill:true,tension:.4,pointRadius:4,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{position:'left',title:{display:true,text:'Jt Rp',font:{size:10}}},y1:{position:'right',title:{display:true,text:'ribu kWh',font:{size:10}},grid:{drawOnChartArea:false}}}}});}
 }
-function initGarduSel(){var s=document.getElementById('tp-gardu');if(!s)return;METER_DATA.forEach(function(m){var o=document.createElement('option');o.value=m.gardu;o.textContent=m.gardu+' ('+m.jmlPJU+') '+m.ulp+(m.status==='anomali'?' ⚠️':'');s.appendChild(o)})}
+function initGarduSel(){var dl=document.getElementById('dl-gardu');if(!dl)return;METER_DATA.forEach(function(m){var o=document.createElement('option');o.value=m.gardu;o.label=m.id+' | '+m.gardu+' ('+m.jmlPJU+' PJU) '+m.ulp;dl.appendChild(o)})}
 window.sGI=function(v){var b=document.getElementById('tp-info');if(!v){b.className='mib';return}var m=METER_DATA.find(function(x){return x.gardu===v});if(!m){b.className='mib';return}b.className='mib show';b.innerHTML='<b>⚡'+m.id+'</b> '+m.ulp+(m.tagihanBln===0?' <span style="color:#991b1b">🔴PENCURIAN</span>':m.status==='anomali'?' <span style="color:#dc2626">⚠️</span>':'')+'<br>'+m.jmlPJU+' PJU | '+(m.totalDaya/1e3).toFixed(1)+'kW | Rp'+(m.tagihanBln/1e6).toFixed(1)+'Jt/bln'};
 var isLeg=true;window.setL=function(v){isLeg=!!v;document.getElementById('ro-l').className='ro'[0]==='r'?'':'';var a=document.getElementById('ro-l'),b=document.getElementById('ro-i');a.className=v?'sl':'';b.className=v?'':'si'};
 function initTables(){
@@ -460,6 +485,43 @@ window.doLogin=function(){var u=(document.getElementById('lu')||{}).value,p=(doc
 
 // ===== NAV =====
 window.sp=function(id){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active')});document.querySelectorAll('.si').forEach(function(s){s.classList.remove('active')});var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');document.querySelectorAll('.si').forEach(function(s){if(s.getAttribute('onclick')&&s.getAttribute('onclick').indexOf("'"+id+"'")>-1)s.classList.add('active')});if((id==='petapublik'||id==='petaadmin')&&map)setTimeout(function(){map.invalidateSize()},150);if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open')};
+
+// ===== FORUM =====
+window.submitForum=function(){
+  var isi=(document.getElementById('fr-isi')||{}).value;
+  if(!isi){alert('Isi forum tidak boleh kosong');return}
+  var data={lokasi:isi.substring(0,100),jenis_masalah:(document.getElementById('fr-kat')||{}).value||'Laporan',keterangan:isi,nama_pelapor:(document.getElementById('fr-nama')||{}).value||'Warga'};
+  (async function(){var fUrl=null;if(pendingFiles['uz-forum']){fUrl=await sbUploadPhoto(pendingFiles['uz-forum'],'forum');delete pendingFiles['uz-forum']}data.foto_url=fUrl;
+  sbInsert('pengaduan',data).then(function(r){showM('Postingan terkirim ke forum!'+(r&&r.nomor_tiket?' Tiket:'+r.nomor_tiket:''));document.getElementById('fr-isi').value='';loadForum()})})();
+};
+function loadForum(){
+  var el=document.getElementById('forumList');if(!el||!sb)return;
+  sb.from('pengaduan').select('*').order('created_at',{ascending:false}).limit(20).then(function(r){
+    if(!r.data||!r.data.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#aaa;font-size:11px">Belum ada postingan forum</div>';return}
+    var h='';r.data.forEach(function(p){
+      var dt=p.created_at?new Date(p.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      var bc=p.status==='selesai'?'var(--a)':p.status==='proses'?'var(--s)':'var(--i)';
+      var cat=p.jenis_masalah||'Laporan';
+      h+='<div class="card" style="border-left:3px solid '+bc+';margin-bottom:8px"><div class="cb" style="padding:10px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="display:flex;align-items:center;gap:6px"><b style="font-size:12px">👤 '+(p.nama_pelapor||'Warga')+'</b><span class="sb sb-g" style="font-size:8px">'+cat+'</span></div><span style="font-size:9px;color:#888">'+dt+'</span></div>'+
+        '<div style="font-size:11px;line-height:1.5;margin:4px 0">'+(p.keterangan||p.lokasi)+'</div>'+
+        (p.foto_url?'<img src="'+p.foto_url+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:6px;margin-top:6px;cursor:pointer" onclick="openPV(\''+p.foto_url+'\',\'Forum\')">':'')+
+        '<div style="display:flex;gap:8px;margin-top:6px;font-size:9px;color:#888"><span>'+(p.nomor_tiket||'')+'</span><span>Status: '+(p.status==='selesai'?'✅ Ditangani':p.status==='proses'?'⏳ Diproses':'🔴 Baru')+'</span></div>'+
+      '</div></div>';
+    });
+    el.innerHTML=h;
+  });
+}
+window.cekPrm=function(){
+  var t=(document.getElementById('cek-prm')||{}).value.trim().toUpperCase();
+  var el=document.getElementById('prm-result');if(!t||!sb){el.innerHTML='<div style="color:var(--d);font-size:11px">Masukkan nomor permohonan</div>';return}
+  sb.from('permohonan').select('*').eq('nomor_permohonan',t).single().then(function(r){
+    if(r.data){var p=r.data;var prog=p.status==='baru'?15:p.status==='review'?40:p.status==='disetujui'?100:0;
+      var bc=p.status==='disetujui'?'var(--a)':p.status==='review'?'var(--s)':'var(--d)';
+      el.innerHTML='<div style="border-left:3px solid '+bc+';padding:10px;border-radius:0 6px 6px 0;background:#fafafa"><b>'+p.nomor_permohonan+'</b> — '+(p.status==='disetujui'?'✅ Disetujui':p.status==='review'?'⏳ Review':'🔴 Baru')+'<br><span style="font-size:11px;color:#666">'+p.lokasi+'</span><div style="margin-top:6px;height:4px;background:#e2e8f0;border-radius:2px"><div style="width:'+prog+'%;height:100%;background:'+bc+';border-radius:2px"></div></div></div>';
+    }else el.innerHTML='<div style="color:var(--d);font-size:11px">❌ Tidak ditemukan</div>';
+  });
+};
 
 // ===== MONITORING PENGADUAN =====
 var pengaduanList=[];
@@ -522,7 +584,7 @@ setInterval(updateClock,1000);updateClock();
 
 // ===== INIT =====
 setTimeout(function(){document.getElementById('ld').remove()},400);
-renderPublic();initMap();
+renderPublic();initMap();setTimeout(loadForum,800);
 </script>
 </body>
 </html>
