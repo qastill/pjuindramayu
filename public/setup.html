@@ -311,9 +311,9 @@ async function runSeed(){
     var m=METER_DATA[i];
     var mid=gMap[m.gardu];
     var pBatch=m.pjuList.map(function(p){return{
-      idpel:p.id,meter_id:mid||null,gardu:m.gardu,
-      lat:p.lat,lng:p.lng,jenis_lampu:p.jenis||'LED',
-      daya:p.daya,tiang:p.tiang||null,status:p.status,is_legal:true
+      idpel:p[0],meter_id:mid||null,gardu:m.gardu,
+      lat:p[1],lng:p[2],jenis_lampu:{LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4],
+      daya:p[3],status:p[5]===1?'aktif':'mati',is_legal:true
     }});
     if(pBatch.length>0){
       var{error}=await sb.from('pju_points').insert(pBatch);
