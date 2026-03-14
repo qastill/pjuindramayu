@@ -267,48 +267,69 @@ function renderAdmin(){
   if(map){map.remove();map=null}initMap();
 }
 
-// ===== SHARED: MAP =====
-var map,mL,cL,zL,cV=true,zV=false;
+// ===== SHARED: MAP (OPTIMIZED) =====
+var map,mL,pjuCluster,cL,zL,cV=false,zV=false,curF='all';
 function initMap(){
   var el=document.getElementById('map-container');if(!el)return;
-  map=L.map(el).setView([-6.42,108.28],11);
+  map=L.map(el,{preferCanvas:true,renderer:L.canvas()}).setView([-6.42,108.28],11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-  mL=L.layerGroup().addTo(map);cL=L.layerGroup().addTo(map);
+  mL=L.layerGroup().addTo(map);
+  cL=L.layerGroup();
+  // Dark zones
   zL=L.layerGroup();
   if(typeof DARK_ZONES!=='undefined')DARK_ZONES.forEach(function(z){
     var c=z.prioritas==='tinggi'?'#dc2626':z.prioritas==='sedang'?'#ea580c':'#64748b';
     L.circle([z.lat,z.lng],{radius:z.radius,color:c,fillColor:c,fillOpacity:.12,weight:2,dashArray:'8,6'}).bindPopup('<div style="font-family:Segoe UI;min-width:180px"><div style="background:'+c+';color:#fff;padding:7px 10px;margin:-10px -12px 7px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">🌑 '+z.id+'</div><b>'+z.nama+'</b><br><span style="font-size:10px;color:#666">Kec.'+z.kec+' | '+z.warga.toLocaleString('id-ID')+' warga | Est.'+z.est_titik+' PJU</span><br><span style="font-size:10px">'+z.alasan+'</span></div>').addTo(zL);
   });
+  // Show cables only at high zoom
+  map.on('zoomend moveend',function(){if(cV)drawCables()});
   rM('all');
 }
 function rM(f){
-  if(!mL)return;mL.clearLayers();cL.clearLayers();
+  if(!mL)return;curF=f;mL.clearLayers();if(map.hasLayer(cL))map.removeLayer(cL);
+  // Meter markers (1872 = OK to render all, they have divIcon)
   METER_DATA.forEach(function(m,mi){
     var isA=m.status==='anomali',isTh=m.tagihanBln===0;
-    var col=isTh?'#991b1b':isA?'#dc2626':'#27ae60'; // GREEN=legal, RED=ilegal
-    var sz=isTh?32:isA?28:22;
+    var col=isTh?'#991b1b':isA?'#dc2626':'#27ae60';
+    var sz=isTh?28:isA?24:18;
     var sM=f==='all'||f==='meter'||(f==='ilegal'&&(isA||isTh));
     if(sM){
-      var ic=L.divIcon({className:'',html:'<div style="width:'+sz+'px;height:'+sz+'px;background:'+col+';border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+(sz>26?18:14)+'px;'+(isTh?'outline:2px solid #dc262666;outline-offset:2px':'')+'"><i class="fas fa-bolt"></i></div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2]});
+      var ic=L.divIcon({className:'',html:'<div style="width:'+sz+'px;height:'+sz+'px;background:'+col+';border-radius:50%;border:2px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+(sz>22?14:11)+'px;'+(isTh?'outline:2px solid #dc262666;outline-offset:1px':'')+'"><i class="fas fa-bolt"></i></div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2]});
       var mk=L.marker([m.lat,m.lng],{icon:ic,zIndexOffset:1000});
-      var stH=isTh?'<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:5px;padding:6px;font-size:10px;color:#991b1b;margin:5px 0"><b>🔴 INDIKASI PENCURIAN</b><br>Tagihan Rp 0 — bypass meter</div>':isA?'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px;font-size:10px;color:#991b1b;margin:5px 0"><b>⚠️ ANOMALI +'+m.anomaliPct+'%</b></div>':'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:4px 6px;font-size:10px;color:#166534;margin:5px 0">✅ Normal</div>';
-      mk.bindPopup('<div style="font-family:Segoe UI;min-width:250px"><div style="background:'+col+';color:#fff;padding:8px 11px;margin:-8px -10px 8px;border-radius:4px 4px 0 0"><b style="font-size:12px">⚡ '+m.id+'</b><div style="font-size:9px;opacity:.8">'+m.gardu+' | PLN:'+(m.pln||'—')+'</div></div><img src="'+IMG_MTR+'" style="width:100%;height:80px;object-fit:cover;border-radius:5px;margin-bottom:6px;cursor:pointer" onclick="openPV(\''+IMG_MTR+'\',\'Meter '+m.id+'\')"><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px"><div style="background:#f8fafc;padding:5px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:15px;font-weight:800;color:#1a3c5e">'+m.jmlPJU+'</div><div style="font-size:8px;color:#888">Jumlah PJU</div></div><div style="background:#f8fafc;padding:5px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:15px;font-weight:800;color:#1a3c5e">'+(m.totalDaya/1000).toFixed(1)+'kW</div><div style="font-size:8px;color:#888">Total Daya</div></div><div style="background:#f8fafc;padding:5px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:13px;font-weight:800;color:#3498db">'+m.kwhPerDay+'</div><div style="font-size:8px;color:#888">kWh/Hari</div></div><div style="background:#f8fafc;padding:5px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:12px;font-weight:800;color:'+(isTh?'#dc2626':'#e67e22')+'">Rp'+(m.tagihanBln>0?(m.tagihanBln/1e6).toFixed(1)+'Jt':'0⚠️')+'</div><div style="font-size:8px;color:#888">Tagihan/Bln</div></div></div>'+stH+'</div>',{maxWidth:280});
+      var stH=isTh?'<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:5px;padding:6px;font-size:10px;color:#991b1b;margin:5px 0"><b>🔴 PENCURIAN</b><br>Tagihan Rp0</div>':isA?'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:5px;font-size:10px;color:#991b1b;margin:5px 0"><b>⚠️ ANOMALI +'+m.anomaliPct+'%</b></div>':'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:4px 6px;font-size:10px;color:#166534;margin:5px 0">✅ Normal</div>';
+      mk.bindPopup('<div style="font-family:Segoe UI;min-width:240px"><div style="background:'+col+';color:#fff;padding:8px 10px;margin:-8px -10px 8px;border-radius:4px 4px 0 0"><b style="font-size:12px">⚡ '+m.id+'</b><div style="font-size:9px;opacity:.8">'+m.gardu+' | PLN:'+(m.pln||'—')+'</div></div><img src="'+IMG_MTR+'" style="width:100%;height:70px;object-fit:cover;border-radius:5px;margin-bottom:6px;cursor:pointer" onclick="openPV(\''+IMG_MTR+'\',\'Meter '+m.id+'\')"><div style="display:grid;grid-template-columns:1fr 1fr;gap:3px"><div style="background:#f8fafc;padding:4px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:14px;font-weight:800;color:#1a3c5e">'+m.jmlPJU+'</div><div style="font-size:7px;color:#888">PJU</div></div><div style="background:#f8fafc;padding:4px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:14px;font-weight:800;color:#1a3c5e">'+(m.totalDaya/1000).toFixed(1)+'kW</div><div style="font-size:7px;color:#888">Daya</div></div><div style="background:#f8fafc;padding:4px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:12px;font-weight:800;color:#3498db">'+m.kwhPerDay+'</div><div style="font-size:7px;color:#888">kWh/Hari</div></div><div style="background:#f8fafc;padding:4px;border-radius:4px;text-align:center;border:1px solid #eee"><div style="font-size:11px;font-weight:800;color:'+(isTh?'#dc2626':'#e67e22')+'">Rp'+(m.tagihanBln>0?(m.tagihanBln/1e6).toFixed(1)+'Jt':'0⚠️')+'</div><div style="font-size:7px;color:#888">Tagihan</div></div></div>'+stH+'</div>',{maxWidth:260});
       mL.addLayer(mk);
     }
-    m.pjuList.forEach(function(p,pi){
+    // PJU: use lightweight CircleMarker (Canvas rendered = super fast)
+    m.pjuList.forEach(function(p){
       var sP=f==='all'||(f==='aktif'&&p[5]===1)||(f==='mati'&&p[5]!==1)||(f==='ilegal'&&(isA||isTh))||f==='meter';
-      if(cV&&(sP||sM))cL.addLayer(L.polyline([[m.lat,m.lng],[p[1],p[2]]],{color:isTh?'#dc2626':isA?'#e74c3c':'#3498db',weight:3,opacity:.5,dashArray:'6,8'}));
       if(sP){
         var pc=p[5]===1?'#16a34a':'#dc2626';
-        var pi2=L.divIcon({className:'',html:'<div style="width:14px;height:14px;background:'+pc+';border-radius:50%;border:2.5px solid rgba(255,255,255,.95);box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>',iconSize:[14,14],iconAnchor:[7,7],popupAnchor:[0,-7]});
-        var pm=L.marker([p[1],p[2]],{icon:pi2});
-        pm.bindPopup('<div style="font-family:Segoe UI;min-width:200px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-8px -10px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p[0]+'</div><img src="'+IMG_PJU+'" style="width:100%;height:70px;object-fit:cover;border-radius:5px;margin-bottom:5px;cursor:pointer" onclick="openPV(\''+IMG_PJU+'\',\'PJU '+p[0]+'\')"><div style="font-size:11px;line-height:1.6">🔌 Induk: <b>'+m.id+'</b><br>💡 <b>'+({LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4])+'</b> | ⚡ <b>'+p[3]+'W</b><br>🚦 <b style="color:'+pc+'">'+(p[5]===1?'AKTIF':'MATI')+'</b></div></div>',{maxWidth:220});
-        mL.addLayer(pm);
+        var cm=L.circleMarker([p[1],p[2]],{radius:5,color:'#fff',weight:1.5,fillColor:pc,fillOpacity:.85});
+        cm.bindPopup(function(){return '<div style="font-family:Segoe UI;min-width:190px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-8px -10px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p[0]+'</div><img src="'+IMG_PJU+'" style="width:100%;height:60px;object-fit:cover;border-radius:5px;margin-bottom:5px;cursor:pointer" onclick="openPV(\''+IMG_PJU+'\',\'PJU '+p[0]+'\')"><div style="font-size:11px;line-height:1.6">🔌 <b>'+m.id+'</b><br>💡 <b>'+({LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4])+'</b> | ⚡ <b>'+p[3]+'W</b><br>🚦 <b style="color:'+pc+'">'+(p[5]===1?'AKTIF':'MATI')+'</b></div></div>';},{maxWidth:210});
+        mL.addLayer(cm);
       }
     });
   });
+  if(cV)drawCables();
 }
-window.fM=function(f){rM(f)};window.tC=function(){cV=!cV;rM('all')};
+// Draw cables only for visible area (viewport) to avoid lag
+function drawCables(){
+  cL.clearLayers();if(!map)return;
+  var z=map.getZoom();if(z<13)return; // Only show cables at zoom 13+
+  var b=map.getBounds();
+  METER_DATA.forEach(function(m){
+    if(!b.contains([m.lat,m.lng]))return; // Skip meters outside viewport
+    var isA=m.status==='anomali',isTh=m.tagihanBln===0;
+    var lc=isTh?'#dc2626':isA?'#e74c3c':'#3498db';
+    m.pjuList.forEach(function(p){
+      cL.addLayer(L.polyline([[m.lat,m.lng],[p[1],p[2]]],{color:lc,weight:2,opacity:.4,dashArray:'5,8'}));
+    });
+  });
+  if(!map.hasLayer(cL))cL.addTo(map);
+}
+window.fM=function(f){rM(f)};
+window.tC=function(){cV=!cV;if(cV){drawCables();cL.addTo(map)}else{map.removeLayer(cL)}};
 window.tZ=function(){zV=!zV;if(zV)zL.addTo(map);else map.removeLayer(zL)};
 window.openPV=function(u,c){document.getElementById('pv-img').src=u;document.getElementById('pv-cap').textContent=c||'';document.getElementById('pv').classList.add('open')};
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('pv').classList.remove('open')});
