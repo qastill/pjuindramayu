@@ -350,7 +350,7 @@ function rM(f){
       if(sP){
         var pc=p[5]===1?'#16a34a':'#dc2626';
         var cm=L.circleMarker([p[1],p[2]],{radius:5,color:'#fff',weight:1.5,fillColor:pc,fillOpacity:.85});
-        cm.bindPopup(function(){return '<div style="font-family:Segoe UI;min-width:190px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-8px -10px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p[0]+'</div><img src="'+IMG_PJU+'" style="width:100%;height:60px;object-fit:cover;border-radius:5px;margin-bottom:5px;cursor:pointer" onclick="openPV(\''+IMG_PJU+'\',\'PJU '+p[0]+'\')"><div style="font-size:11px;line-height:1.6">🔌 <b>'+m.id+'</b><br>💡 <b>'+({LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4])+'</b> | ⚡ <b>'+p[3]+'W</b><br>🚦 <b style="color:'+pc+'">'+(p[5]===1?'AKTIF':'MATI')+'</b></div></div>';},{maxWidth:210});
+        cm.bindPopup(function(){return '<div style="font-family:Segoe UI;min-width:200px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-8px -10px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p[0]+'</div><img src="'+IMG_PJU+'" style="width:100%;height:60px;object-fit:cover;border-radius:5px;margin-bottom:5px;cursor:pointer" onclick="openPV(\''+IMG_PJU+'\',\'PJU '+p[0]+'\')"><div style="font-size:11px;line-height:1.6">🔌 Meter: <b>'+m.id+'</b><br>🏗️ Gardu: <b>'+m.gardu+'</b> ('+m.ulp+')<br>💡 <b>'+({LED:'LED',Sod:'Sodium HPS',Sol:'Solar Panel',Mer:'Mercury'}[p[4]]||p[4])+'</b> | ⚡ <b>'+p[3]+'W</b><br>🚦 <b style="color:'+pc+'">'+(p[5]===1?'AKTIF':'MATI')+'</b><br>📊 '+m.jmlPJU+' lampu dari meter ini | '+(m.totalDaya/1e3).toFixed(1)+'kW</div><img src="'+IMG_MTR+'" style="width:100%;height:50px;object-fit:cover;border-radius:4px;margin-top:5px;cursor:pointer;opacity:.85" onclick="openPV(\''+IMG_MTR+'\',\'Meter '+m.id+' — '+m.gardu+'\')"></div>';},{maxWidth:230});
         mL.addLayer(cm);
       }
     });
@@ -404,17 +404,21 @@ function rM(f){
 // Draw cables only for visible area (viewport) to avoid lag
 function drawCables(){
   cL.clearLayers();if(!map)return;
-  var z=map.getZoom();if(z<13)return; // Only show cables at zoom 13+
+  var z=map.getZoom();if(z<12)return; // Show cables at zoom 12+
   var b=map.getBounds();
+  var count=0;
   METER_DATA.forEach(function(m){
-    if(!b.contains([m.lat,m.lng]))return; // Skip meters outside viewport
+    if(!b.contains([m.lat,m.lng]))return;
     var isA=m.status==='anomali',isTh=m.tagihanBln===0;
-    var lc=isTh?'#dc2626':isA?'#e74c3c':'#3498db';
+    var lc=isTh?'#ff4444':isA?'#ff6b35':'#4fc3f7';
+    var w=z>=15?3:z>=13?2.5:2;
     m.pjuList.forEach(function(p){
-      cL.addLayer(L.polyline([[m.lat,m.lng],[p[1],p[2]]],{color:lc,weight:2,opacity:.4,dashArray:'5,8'}));
+      cL.addLayer(L.polyline([[m.lat,m.lng],[p[1],p[2]]],{color:lc,weight:w,opacity:.7}));
+      count++;
     });
   });
   if(!map.hasLayer(cL))cL.addTo(map);
+  console.log('[Cable] Drew '+count+' cables at zoom '+z);
 }
 window.fM=function(f){rM(f)};
 window.tC=function(){cV=!cV;if(cV){drawCables();cL.addTo(map)}else{map.removeLayer(cL)}};
@@ -452,7 +456,48 @@ window.fT=function(v){document.querySelectorAll('#tPB tr').forEach(function(r){r
 // ===== UPLOAD & GPS =====
 var pendingFiles={};
 window.pU=function(i,z){var f=i.files[0];if(!f)return;pendingFiles[z]=f;var r=new FileReader();r.onload=function(e){var el=document.getElementById(z);el.classList.add('hp');el.innerHTML='<img src="'+e.target.result+'"><div style="font-size:9px;color:#27ae60;margin-top:2px">✅ Foto siap upload ('+Math.round(f.size/1024)+'KB)</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\''+z+'\')">'};r.readAsDataURL(f)};
-window.gG=function(a,b,btn){if(!navigator.geolocation){alert('GPS tidak tersedia');return}btn.innerHTML='📡 Mengambil...';btn.disabled=true;navigator.geolocation.getCurrentPosition(function(p){document.getElementById(a).value=p.coords.latitude.toFixed(6);document.getElementById(b).value=p.coords.longitude.toFixed(6);btn.innerHTML='✅ OK!';btn.style.background='#27ae60';var lat=p.coords.latitude,lng=p.coords.longitude,best=null,bd=Infinity;METER_DATA.forEach(function(m){var d=Math.sqrt(Math.pow(m.lat-lat,2)+Math.pow(m.lng-lng,2));if(d<bd){bd=d;best=m}});if(best&&document.getElementById('tp-gardu')){document.getElementById('tp-gardu').value=best.gardu;sGI(best.gardu);showM('📍 GPS OK! Induk meter terdeteksi: '+best.id+' ('+best.gardu+') — '+best.ulp+'. Jarak: '+(Math.round(bd*111000))+'m')}setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis';btn.style.background='';btn.disabled=false},2500)},function(){btn.innerHTML='❌ Gagal';btn.disabled=false;setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis'},2e3)},{enableHighAccuracy:true,timeout:15000})};
+window.gG=function(a,b,btn){
+  if(!navigator.geolocation){alert('GPS tidak tersedia di browser ini. Gunakan Chrome/Safari.');return}
+  btn.innerHTML='📡 Mengambil GPS...';btn.disabled=true;btn.style.background='#e67e22';
+  var got=false,wid=null;
+  function onPos(p){
+    if(got)return;got=true;if(wid)navigator.geolocation.clearWatch(wid);
+    var lat=p.coords.latitude,lng=p.coords.longitude,acc=Math.round(p.coords.accuracy||0);
+    document.getElementById(a).value=lat.toFixed(6);
+    document.getElementById(b).value=lng.toFixed(6);
+    btn.innerHTML='✅ GPS OK (±'+acc+'m)';btn.style.background='#27ae60';
+    // Auto-detect nearest meter
+    var best=null,bd=Infinity;
+    METER_DATA.forEach(function(m){var d=Math.sqrt(Math.pow(m.lat-lat,2)+Math.pow(m.lng-lng,2));if(d<bd){bd=d;best=m}});
+    var distM=Math.round(bd*111000);
+    if(best){
+      var ge=document.getElementById('tp-gardu');
+      if(ge){ge.value=best.gardu;sGI(best.gardu)}
+      showM('📍 GPS berhasil!\n⚡ Meter terdekat: '+best.id+'\n🏗️ Gardu: '+best.gardu+'\n📍 ULP: '+best.ulp+'\n📏 Jarak: '+distM+'m\n🎯 Akurasi GPS: ±'+acc+'m');
+    }else{showM('📍 GPS OK! ('+lat.toFixed(4)+', '+lng.toFixed(4)+')\nPilih Induk Meter manual.')}
+    setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis';btn.style.background='';btn.disabled=false},3000);
+  }
+  function onErr(e){
+    if(got)return;
+    var msg='GPS gagal: ';
+    if(e.code===1)msg+='Izin ditolak. Buka Settings > Privacy > Location.';
+    else if(e.code===2)msg+='Sinyal tidak tersedia. Coba di tempat terbuka.';
+    else if(e.code===3)msg+='Timeout. Coba lagi.';
+    else msg+=e.message||'Unknown error';
+    btn.innerHTML='❌ '+msg.substring(0,30);btn.style.background='#e74c3c';btn.disabled=false;
+    showM(msg);
+    setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis';btn.style.background=''},3000);
+  }
+  // Try watchPosition first (faster on mobile), fallback to getCurrentPosition
+  try{
+    wid=navigator.geolocation.watchPosition(onPos,function(){},
+      {enableHighAccuracy:true,timeout:20000,maximumAge:10000});
+  }catch(e){}
+  navigator.geolocation.getCurrentPosition(onPos,onErr,
+    {enableHighAccuracy:true,timeout:20000,maximumAge:30000});
+  // Safety timeout
+  setTimeout(function(){if(!got){got=true;if(wid)navigator.geolocation.clearWatch(wid);onErr({code:3})}},25000);
+};
 window.sPJU=function(){var la=document.getElementById('tp-lat').value,lo=document.getElementById('tp-lng').value,g=document.getElementById('tp-gardu').value;if(!la||!lo){alert('GPS wajib!');return}if(!g){alert('Pilih Meter!');return}var h=document.getElementById('th');if(h.textContent.indexOf('Belum')>-1)h.innerHTML='';var c=document.createElement('div');c.style.cssText='background:'+(isLeg?'#f0fff4':'#fef2f2')+';border:1.5px solid '+(isLeg?'#86efac':'#fca5a5')+';border-radius:6px;padding:8px;margin-bottom:5px;font-size:10px';c.innerHTML='<b style="color:'+(isLeg?'#166534':'#991b1b')+'">'+(isLeg?'✅Legal':'🔴ILEGAL')+' → '+g+'</b><br>📍'+la+','+lo+' | '+new Date().toLocaleTimeString('id-ID');h.prepend(c);(async function(){var fUrl=null;if(pendingFiles['uz-pju']){fUrl=await sbUploadPhoto(pendingFiles['uz-pju'],'pju');delete pendingFiles['uz-pju']}sbInsert('pju_points',{gardu:g,lat:parseFloat(la),lng:parseFloat(lo),jenis_lampu:(document.getElementById('tp-j')||{}).value||'LED',daya:parseInt((document.getElementById('tp-d')||{}).value)||900,status:'aktif',is_legal:isLeg,foto_url:fUrl})})();showM('PJU di-tag ke '+g+(isLeg?'':' (ILEGAL)')+'. Tersimpan ke database.');['tp-lat','tp-lng','tp-d'].forEach(function(x){document.getElementById(x).value=''});document.getElementById('tp-gardu').value='';document.getElementById('tp-info').className='mib';var uz=document.getElementById('uz-pju');uz.classList.remove('hp');uz.innerHTML='<div style="font-size:28px">📷</div><div style="color:#888;font-size:11px">Buka kamera HP</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-pju\')">'};
 window.sMTR=function(){var la=document.getElementById('tm-lat').value,lo=document.getElementById('tm-lng').value,g=document.getElementById('tm-g').value;if(!la||!lo){alert('GPS wajib!');return}if(!g){alert('ID Gardu wajib!');return}var h=document.getElementById('mh');if(h.textContent.indexOf('Belum')>-1)h.innerHTML='';var c=document.createElement('div');c.style.cssText='background:#fffbeb;border:1.5px solid #fde68a;border-radius:6px;padding:8px;margin-bottom:5px;font-size:10px';c.innerHTML='<b style="color:#92400e">⚡'+g+' Tersimpan</b><br>📍'+la+','+lo;h.prepend(c);(async function(){var fUrl=null;if(pendingFiles['uz-meter']){fUrl=await sbUploadPhoto(pendingFiles['uz-meter'],'meter');delete pendingFiles['uz-meter']}sbInsert('kwh_meters',{gardu:g,no_pln:(document.getElementById('tm-p')||{}).value||'',ulp:(document.getElementById('tm-u')||{}).value||'',lat:parseFloat(la),lng:parseFloat(lo),status:'normal',foto_url:fUrl})})();showM('Meter '+g+' tersimpan ke database!');['tm-lat','tm-lng','tm-g','tm-p'].forEach(function(x){document.getElementById(x).value=''});var uz=document.getElementById('uz-meter');uz.classList.remove('hp');uz.innerHTML='<div style="font-size:28px">⚡</div><div style="color:#888;font-size:11px">Foto KWH Meter</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-meter\')">'};
 
