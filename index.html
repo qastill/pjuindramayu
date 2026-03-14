@@ -333,6 +333,52 @@ select.fc{cursor:pointer}
 /* ── HERO IMG ── */
 .hero{width:100%;height:110px;object-fit:cover;border-radius:7px;margin-bottom:11px}
 
+/* ── BILLING HERO CARD ── */
+.billing-hero{
+  background:linear-gradient(135deg,#0f2340 0%,#1a4a7a 100%);
+  border-radius:10px;padding:16px;color:#fff;margin-bottom:12px;
+  position:relative;overflow:hidden;border:1px solid rgba(245,166,35,.2);
+}
+.billing-hero::before{content:'';position:absolute;top:-40%;right:-15%;width:180px;height:180px;border-radius:50%;background:rgba(245,166,35,.08)}
+.billing-hero .bh-title{font-size:10px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.billing-hero .bh-amount{font-size:26px;font-weight:800;color:var(--gold);line-height:1}
+.billing-hero .bh-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:5px}
+.billing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.billing-item{background:rgba(255,255,255,.08);border-radius:7px;padding:8px;text-align:center}
+.billing-item .bv{font-size:14px;font-weight:800;color:#fff}
+.billing-item .bl{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px}
+
+/* ── TAGGING UPLOAD ── */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:8px;padding:22px;
+  text-align:center;cursor:pointer;background:var(--bg);transition:all .25s;
+  position:relative;overflow:hidden;
+}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:#fffbeb}
+.upload-zone.has-photo{border-style:solid;border-color:var(--green);padding:6px}
+.upload-zone .uz-icon{font-size:32px;margin-bottom:5px}
+.upload-zone .uz-text{font-size:11px;color:var(--gray)}
+.upload-zone .uz-hint{font-size:10px;color:#94a3b8;margin-top:3px}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-zone img{max-width:100%;max-height:200px;border-radius:6px;object-fit:cover}
+.tag-result{background:#dcfce7;border:1.5px solid #86efac;border-radius:8px;padding:11px;margin-top:10px}
+.tag-result h4{font-size:12px;font-weight:700;color:#166534;margin-bottom:5px}
+.tag-result p{font-size:11px;color:#15803d}
+
+/* ── METER INFO BOX ── */
+.meter-info-box{
+  background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
+  padding:10px;margin:8px 0;display:none;
+}
+.meter-info-box.show{display:block}
+.mi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.mi-item{text-align:center}
+.mi-item .mv{font-weight:800;font-size:15px;color:var(--navy)}
+.mi-item .ml{font-size:9px;color:var(--gray)}
+
+/* ── GARDU POPUP ENHANCED ── */
+.gardu-pop{font-family:'Inter',sans-serif;min-width:260px}
+
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
   #panel.open{width:100vw}
@@ -359,6 +405,8 @@ select.fc{cursor:pointer}
     <button class="tnav-btn" id="nb-tiket" onclick="openPanel('tiket')">🎫 Cek Tiket</button>
     <button class="tnav-btn" id="nb-pasang" onclick="openPanel('pasang')">💡 Minta Pasang</button>
     <button class="tnav-btn" id="nb-forum" onclick="openPanel('forum')">💬 Forum Warga</button>
+    <button class="tnav-btn" id="nb-tagpju" onclick="openPanel('tagpju')" style="display:none">📸 Tag PJU</button>
+    <button class="tnav-btn" id="nb-tagmeter" onclick="openPanel('tagmeter')" style="display:none">⚡ Tag Meter</button>
   </div>
   <div class="topbar-right">
     <span class="clock" id="clock"></span>
@@ -581,12 +629,62 @@ function initMap(){
     L.polyline(cl.points,{color:color,weight:weight,opacity:opacity,dashArray:dash})
       .bindTooltip('Gardu: '+cl.gardu+' ('+cl.n_pju+' PJU) — '+cl.status,{sticky:true,direction:'top'})
       .addTo(cableLayer);
-    // Gardu marker (square)
+    // Gardu marker (enhanced with billing & anomaly data)
+    var garduPJUs=PJU_DATA.filter(function(d){return d[4]===cl.gardu;});
+    var garduTotalDaya=garduPJUs.reduce(function(a,d){return a+(d[3]||0);},0);
+    var garduKwhEst=garduPJUs.reduce(function(a,d){return a+(d[11]||0);},0);
+    var garduKwhAct=garduPJUs.reduce(function(a,d){return a+(d[12]||0);},0);
+    var garduAnomalyPct=garduKwhEst>0?((garduKwhAct-garduKwhEst)/garduKwhEst*100).toFixed(1):0;
+    var garduBillPerMonth=Math.round(garduKwhAct*30*1497);
+    var isAnomali=cl.status==='anomali';
+    var garduPhoto=PHOTOS_METER[(parseInt(cl.gardu.replace(/[^0-9]/g,''),10)||0)%PHOTOS_METER.length];
+    
+    var garduPopup=
+      '<div style="font-family:Inter,sans-serif;min-width:260px">'+
+        '<div style="background:'+(isAnomali?'#dc2626':'#e67e22')+';color:#fff;padding:10px 13px;margin:-14px -20px 10px;border-radius:4px 4px 0 0">'+
+          '<div style="font-weight:700;font-size:13px">⚡ Gardu / KWH Meter: '+cl.gardu+'</div>'+
+          '<div style="font-size:10px;opacity:.8">'+cl.n_pju+' titik PJU terhubung'+(isAnomali?' &mdash; ⚠️ ANOMALI':'')+' </div>'+
+        '</div>'+
+        '<img src="'+garduPhoto+'" style="width:100%;height:80px;object-fit:cover;border-radius:5px;margin-bottom:8px;cursor:pointer" onclick="openPV(\''+garduPhoto+'\',\'KWH Meter '+cl.gardu+'\')">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px">'+
+          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
+            '<div style="font-size:16px;font-weight:800;color:#0f2340">'+cl.n_pju+'</div>'+
+            '<div style="font-size:9px;color:#64748b">Jumlah PJU</div>'+
+          '</div>'+
+          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
+            '<div style="font-size:16px;font-weight:800;color:#0f2340">'+(garduTotalDaya/1000).toFixed(1)+' kW</div>'+
+            '<div style="font-size:9px;color:#64748b">Total Daya</div>'+
+          '</div>'+
+          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
+            '<div style="font-size:16px;font-weight:800;color:#2563eb">'+(garduKwhAct||garduKwhEst).toFixed(1)+'</div>'+
+            '<div style="font-size:9px;color:#64748b">kWh/Hari</div>'+
+          '</div>'+
+          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
+            '<div style="font-size:14px;font-weight:800;color:#ea580c">Rp '+(garduBillPerMonth>0?(garduBillPerMonth/1000000).toFixed(1)+'Jt':'—')+'</div>'+
+            '<div style="font-size:9px;color:#64748b">Tagihan/Bln</div>'+
+          '</div>'+
+        '</div>'+
+        (isAnomali?
+          '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px;font-size:10px;color:#991b1b;margin-bottom:6px">'+
+            '<strong>🔴 ANOMALI TERDETEKSI +'+garduAnomalyPct+'%</strong><br>'+
+            'kWh estimasi: '+garduKwhEst.toFixed(1)+' | Aktual: '+garduKwhAct.toFixed(1)+'<br>'+
+            'Kemungkinan beban tidak terdaftar / pencurian daya'+
+          '</div>':
+          '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 8px;font-size:10px;color:#166534;margin-bottom:6px">'+
+            '✅ Normal &mdash; konsumsi sesuai estimasi'+
+          '</div>'
+        )+
+        '<div style="display:flex;gap:5px">'+
+          '<button onclick="highlightGarduPJU(\''+cl.gardu+'\')" style="flex:1;padding:5px;background:#0f2340;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-weight:700">🔍 Sorot PJU</button>'+
+          (isAnomali?'<button onclick="openPanel(\'admin\')" style="flex:1;padding:5px;background:#dc2626;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-weight:700">⚠️ Investigasi</button>':'')+
+        '</div>'+
+      '</div>';
+    
     L.marker(cl.center,{icon:L.divIcon({
       className:'',
-      html:'<div style="width:7px;height:7px;background:'+color+';border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.4)"></div>',
-      iconSize:[7,7],iconAnchor:[3,3]
-    })}).bindTooltip('Gardu: '+cl.gardu,{direction:'top'}).addTo(cableLayer);
+      html:'<div style="width:'+(isAnomali?10:7)+'px;height:'+(isAnomali?10:7)+'px;background:'+color+';border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.4)'+(isAnomali?';outline:2px solid rgba(220,38,38,.5);outline-offset:1px':'')+'"></div>',
+      iconSize:[isAnomali?10:7,isAnomali?10:7],iconAnchor:[isAnomali?5:3,isAnomali?5:3]
+    })}).bindPopup(garduPopup,{maxWidth:300}).addTo(cableLayer);
   });
 
   // Dark zone layer
@@ -814,7 +912,7 @@ function locateUser(){
 // ================================================================
 // PANEL SYSTEM
 // ================================================================
-var PANEL_TITLES={home:'Statistik PJU',lapor:'Lapor PJU Bermasalah',tiket:'🎫 Cek Status Laporan',laporan:'Daftar Laporan',pasang:'Minta Pasang PJU',forum:'Forum Warga',admin:'Dashboard Admin'};
+var PANEL_TITLES={home:'Statistik PJU',lapor:'Lapor PJU Bermasalah',tiket:'🎫 Cek Status Laporan',laporan:'Daftar Laporan',pasang:'Minta Pasang PJU',forum:'Forum Warga',admin:'Dashboard Admin',tagpju:'📸 Upload & Tagging PJU',tagmeter:'⚡ Upload & Tagging Meter'};
 function openPanel(name){
   document.getElementById('panel-title').textContent=PANEL_TITLES[name]||name;
   document.getElementById('panel').classList.add('open');
@@ -823,7 +921,7 @@ function openPanel(name){
   if(nb) nb.classList.add('active');
   var body=document.getElementById('panel-body');
   body.innerHTML='';
-  ({home:renderHome,lapor:renderLapor,tiket:renderTiket,laporan:renderLaporan,pasang:renderPasang,forum:renderForum,admin:renderAdmin}[name]||function(){})(body);
+  ({home:renderHome,lapor:renderLapor,tiket:renderTiket,laporan:renderLaporan,pasang:renderPasang,forum:renderForum,admin:renderAdmin,tagpju:renderTagPJU,tagmeter:renderTagMeter}[name]||function(){})(body);
 }
 function closePanel(){
   document.getElementById('panel').classList.remove('open');
@@ -835,8 +933,32 @@ function closePanel(){
 // ================================================================
 function renderHome(el){
   var s=STATS;
+  // Calculate billing estimation
+  var now=new Date();
+  var startOfYear=new Date(2025,0,1);
+  var totalDays=Math.floor((now-startOfYear)/(1000*60*60*24));
+  var kwhPerDay=parseFloat(s.kwh_act_total)||247.8;
+  var totalKwh=kwhPerDay*totalDays;
+  var tarifPln=1497;
+  var totalBill=totalKwh*tarifPln;
+  var todayStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+  
   el.innerHTML=
   '<div class="sec">'+
+    // ── BILLING ESTIMATION CARD ──
+    '<div class="billing-hero">'+
+      '<div class="bh-title">💰 Estimasi Tagihan Listrik PJU &mdash; 1 Jan 2025 s.d. Hari Ini</div>'+
+      '<div class="bh-amount">Rp '+Math.round(totalBill).toLocaleString('id-ID')+'</div>'+
+      '<div class="bh-sub">Periode: 1 Januari 2025 &mdash; '+todayStr+' ('+totalDays+' hari)</div>'+
+      '<div class="billing-grid">'+
+        '<div class="billing-item"><div class="bv">'+Math.round(totalKwh).toLocaleString('id-ID')+'</div><div class="bl">Total kWh</div></div>'+
+        '<div class="billing-item"><div class="bv">'+kwhPerDay.toLocaleString('id-ID')+'</div><div class="bl">kWh / Hari</div></div>'+
+        '<div class="billing-item"><div class="bv">Rp 1.497</div><div class="bl">Tarif PLN/kWh</div></div>'+
+        '<div class="billing-item"><div class="bv">'+s.total.toLocaleString('id-ID')+'</div><div class="bl">Total PJU</div></div>'+
+        '<div class="billing-item"><div class="bv">318</div><div class="bl">Meter Aktif</div></div>'+
+        '<div class="billing-item"><div class="bv" style="color:#ff8a8a">+'+((parseFloat(s.kwh_act_total)-parseFloat(s.kwh_total))/parseFloat(s.kwh_total)*100).toFixed(1)+'%</div><div class="bl">Anomali kWh</div></div>'+
+      '</div>'+
+    '</div>'+
     '<img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&h=200&fit=crop" class="hero" alt="PJU Indramayu">'+
     '<div class="sec-title">Ringkasan PJU Kabupaten Indramayu</div>'+
     '<div class="stat-row">'+
@@ -888,6 +1010,13 @@ function renderHome(el){
       '<button class="btn btn-outline btn-full" onclick="openPanel(\'tiket\')">🎫 Cek Status Laporan</button>'+
       '<button class="btn btn-outline btn-full" onclick="openPanel(\'forum\')">💬 Forum Diskusi Warga</button>'+
     '</div>'+
+    (isLoggedIn?
+    '<div class="div"></div>'+
+    '<div class="sec-title">🔧 Pendataan (Admin)</div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px">'+
+      '<button class="btn btn-green btn-full" onclick="openPanel(\'tagpju\')">📸 Upload & Tagging PJU</button>'+
+      '<button class="btn btn-gold btn-full" onclick="openPanel(\'tagmeter\')">⚡ Upload & Tagging KWH Meter</button>'+
+    '</div>':'')+
     '<div class="div"></div>'+
     '<div class="sec-title">Export Data</div>'+
     '<div style="display:flex;gap:6px">'+
@@ -1321,6 +1450,8 @@ function doLogin(){
     document.getElementById('uc-av').style.background=loginRole==='pln'?'#2563eb':'#16a34a';
     document.getElementById('uc-name').textContent=loggedUser.name;
     document.getElementById('btn-login').style.display='none';
+    document.getElementById('nb-tagpju').style.display='';
+    document.getElementById('nb-tagmeter').style.display='';
     showToast('Login berhasil! Selamat datang, '+loggedUser.name);
     openPanel('admin');
   } else {
@@ -1331,6 +1462,8 @@ function doLogin(){
 function doLogout(){
   isLoggedIn=false;loggedUser=null;
   document.getElementById('user-chip').style.display='none';
+  document.getElementById('nb-tagpju').style.display='none';
+  document.getElementById('nb-tagmeter').style.display='none';
   document.getElementById('btn-login').style.display='block';
   showToast('Logout berhasil');
   openPanel('home');
@@ -1388,10 +1521,255 @@ document.getElementById('pv').addEventListener('click',function(e){if(e.target==
 document.getElementById('login-bg').addEventListener('click',function(e){if(e.target===this)closeLogin();});
 
 // ================================================================
+// RENDER: TAG PJU (Upload foto & tagging titik PJU) - Admin Only
+// ================================================================
+var taggedPJUCount=0;
+
+function renderTagPJU(el){
+  if(!isLoggedIn){
+    el.innerHTML='<div class="sec"><div class="alert al-warn">Halaman ini memerlukan login admin. Silakan login terlebih dahulu.</div><button class="btn btn-navy btn-full" onclick="openLogin()">Login</button></div>';
+    return;
+  }
+  // Build gardu options from CABLE_LINES
+  var garduOpts=CABLE_LINES.map(function(c){
+    return '<option value="'+c.gardu+'">'+c.gardu+' ('+c.n_pju+' PJU)'+(c.status==='anomali'?' ⚠️ ANOMALI':'')+'</option>';
+  }).join('');
+
+  el.innerHTML=
+  '<div class="sec">'+
+    '<div class="alert al-info">Upload foto PJU di lapangan, tandai GPS, pilih induk KWH Meter (gardu), dan data langsung tersimpan ke peta.</div>'+
+    
+    '<div class="fg"><label>📸 Foto PJU <span style="color:#dc2626">*</span></label>'+
+      '<div class="upload-zone" id="uz-pju" onclick="document.getElementById(\'pju-file\').click()">'+
+        '<div class="uz-icon">📷</div>'+
+        '<div class="uz-text">Klik untuk foto / upload gambar PJU</div>'+
+        '<div class="uz-hint">JPG, PNG &bull; dari kamera atau galeri</div>'+
+        '<input type="file" id="pju-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-pju\')">'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="fg"><label>📍 Lokasi GPS <span style="color:#dc2626">*</span></label>'+
+      '<div class="frow"><div class="fg"><label style="font-size:10px">Lat</label><input class="fc" id="tp-lat" placeholder="-6.xxxx"></div>'+
+      '<div class="fg"><label style="font-size:10px">Lng</label><input class="fc" id="tp-lng" placeholder="108.xxxx"></div></div>'+
+      '<button class="gps-btn" onclick="getGPS(\'tp-lat\',\'tp-lng\',this)">📱 Ambil Lokasi GPS Otomatis</button>'+
+    '</div>'+
+
+    '<div class="fg"><label>⚡ Induk KWH Meter / Gardu <span style="color:#dc2626">*</span></label>'+
+      '<select class="fc" id="tp-gardu" onchange="showGarduInfo(this.value)">'+
+        '<option value="">-- Auto-detect / Pilih Gardu --</option>'+
+        garduOpts+
+      '</select>'+
+    '</div>'+
+
+    '<div class="meter-info-box" id="tp-gardu-info"></div>'+
+
+    '<div class="div"></div>'+
+    '<div style="font-size:10px;color:var(--gray);font-weight:700;margin-bottom:8px">DATA OPSIONAL (bisa diisi nanti)</div>'+
+
+    '<div class="frow">'+
+      '<div class="fg"><label>Jenis Lampu</label><select class="fc" id="tp-jenis"><option value="">--</option><option>LED</option><option>Sodium HPS</option><option>Solar Panel</option><option>Mercury</option></select></div>'+
+      '<div class="fg"><label>Daya (W)</label><input class="fc" type="number" id="tp-daya" placeholder="cth: 900"></div>'+
+    '</div>'+
+    '<div class="frow">'+
+      '<div class="fg"><label>Merk</label><input class="fc" id="tp-merk" placeholder="cth: SANXING"></div>'+
+      '<div class="fg"><label>Tiang / Kode</label><input class="fc" id="tp-tiang" placeholder="cth: 104"></div>'+
+    '</div>'+
+    '<div class="fg"><label>Catatan</label><textarea class="fc" id="tp-note" style="min-height:50px" placeholder="Catatan opsional..."></textarea></div>'+
+
+    '<button class="btn btn-green btn-full" style="padding:11px;font-size:13px" onclick="submitTagPJU()">📸 Upload & Simpan Tagging PJU</button>'+
+
+    '<div id="tp-results"></div>'+
+
+    '<div class="div"></div>'+
+    '<div class="sec-title">Statistik Pendataan Hari Ini</div>'+
+    '<div class="stat-row two">'+
+      '<div class="stat-box"><div class="n" style="color:#2563eb" id="tp-count">'+taggedPJUCount+'</div><div class="l">PJU Di-tag Hari Ini</div></div>'+
+      '<div class="stat-box"><div class="n" style="color:#16a34a">'+STATS.total+'</div><div class="l">Total Terdata</div></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function showGarduInfo(gardu){
+  var box=document.getElementById('tp-gardu-info');
+  if(!gardu){box.className='meter-info-box';return;}
+  var cl=CABLE_LINES.find(function(c){return c.gardu===gardu;});
+  if(!cl){box.className='meter-info-box';return;}
+  box.className='meter-info-box show';
+  var pjus=PJU_DATA.filter(function(d){return d[4]===gardu;});
+  var totalDaya=pjus.reduce(function(a,d){return a+(d[3]||0);},0);
+  var kwhEst=pjus.reduce(function(a,d){return a+(d[11]||0);},0);
+  var isAnomali=cl.status==='anomali';
+  box.innerHTML=
+    '<div style="font-size:11px;font-weight:700;margin-bottom:5px">⚡ Info Gardu: '+gardu+(isAnomali?' <span style="color:#dc2626">⚠️ ANOMALI</span>':'')+'</div>'+
+    '<div class="mi-grid">'+
+      '<div class="mi-item"><div class="mv">'+cl.n_pju+'</div><div class="ml">PJU Terhubung</div></div>'+
+      '<div class="mi-item"><div class="mv">'+(totalDaya/1000).toFixed(1)+'kW</div><div class="ml">Total Daya</div></div>'+
+      '<div class="mi-item"><div class="mv">'+kwhEst.toFixed(1)+'</div><div class="ml">kWh/Hari</div></div>'+
+    '</div>'+
+    '<div style="font-size:10px;color:var(--gray);margin-top:5px">PJU baru ini akan menjadi PJU ke-'+(cl.n_pju+1)+' di gardu ini</div>';
+}
+
+function submitTagPJU(){
+  var lat=document.getElementById('tp-lat').value;
+  var lng=document.getElementById('tp-lng').value;
+  var gardu=document.getElementById('tp-gardu').value;
+  if(!lat||!lng){showToast('Lokasi GPS wajib diisi!');return;}
+  if(!gardu){showToast('Pilih Induk KWH Meter / Gardu!');return;}
+  var jenis=document.getElementById('tp-jenis').value||'—';
+  var daya=document.getElementById('tp-daya').value||'—';
+  var merk=document.getElementById('tp-merk').value||'—';
+  taggedPJUCount++;
+  var tpCount=document.getElementById('tp-count');
+  if(tpCount) tpCount.textContent=taggedPJUCount;
+  var results=document.getElementById('tp-results');
+  var card=document.createElement('div');
+  card.className='tag-result';
+  card.innerHTML='<h4>✅ PJU Berhasil Di-tag!</h4>'+
+    '<p>📍 '+lat+', '+lng+' | ⚡ Gardu: '+gardu+'<br>💡 '+jenis+' '+daya+'W | 🏷️ '+merk+'<br>🕐 '+new Date().toLocaleString('id-ID')+'</p>';
+  results.prepend(card);
+  showToast('📸 PJU berhasil di-tag ke gardu '+gardu+'!');
+  // Reset
+  document.getElementById('tp-lat').value='';
+  document.getElementById('tp-lng').value='';
+  document.getElementById('tp-gardu').value='';
+  document.getElementById('tp-gardu-info').className='meter-info-box';
+  var uz=document.getElementById('uz-pju');
+  if(uz){uz.classList.remove('has-photo');uz.innerHTML='<div class="uz-icon">📷</div><div class="uz-text">Klik untuk foto / upload gambar PJU</div><div class="uz-hint">JPG, PNG &bull; dari kamera atau galeri</div><input type="file" id="pju-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-pju\')">';}
+}
+
+// ================================================================
+// RENDER: TAG METER (Upload foto & tagging KWH Meter) - Admin Only
+// ================================================================
+function renderTagMeter(el){
+  if(!isLoggedIn){
+    el.innerHTML='<div class="sec"><div class="alert al-warn">Halaman ini memerlukan login admin.</div><button class="btn btn-navy btn-full" onclick="openLogin()">Login</button></div>';
+    return;
+  }
+  el.innerHTML=
+  '<div class="sec">'+
+    '<div class="alert al-info">Upload foto KWH Meter PLN di lapangan. Data akan muncul di peta sebagai induk meter yang menghubungkan ke titik-titik PJU.</div>'+
+
+    '<div class="fg"><label>📸 Foto KWH Meter <span style="color:#dc2626">*</span></label>'+
+      '<div class="upload-zone" id="uz-meter" onclick="document.getElementById(\'meter-file\').click()">'+
+        '<div class="uz-icon">⚡</div>'+
+        '<div class="uz-text">Klik untuk foto KWH Meter</div>'+
+        '<div class="uz-hint">Pastikan nomor PLN & stand meter terbaca jelas</div>'+
+        '<input type="file" id="meter-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-meter\')">'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="fg"><label>📍 Lokasi GPS <span style="color:#dc2626">*</span></label>'+
+      '<div class="frow"><div class="fg"><label style="font-size:10px">Lat</label><input class="fc" id="tm-lat" placeholder="-6.xxxx"></div>'+
+      '<div class="fg"><label style="font-size:10px">Lng</label><input class="fc" id="tm-lng" placeholder="108.xxxx"></div></div>'+
+      '<button class="gps-btn" onclick="getGPS(\'tm-lat\',\'tm-lng\',this)">📱 Ambil Lokasi GPS Otomatis</button>'+
+    '</div>'+
+
+    '<div class="fg"><label>Nama Gardu / ID Meter <span style="color:#dc2626">*</span></label><input class="fc" id="tm-gardu" placeholder="cth: BUGC atau MTR-2025-343"></div>'+
+    '<div class="fg"><label>No. PLN / ID Pelanggan</label><input class="fc" id="tm-pln" placeholder="cth: 541721001234"></div>'+
+    '<div class="frow">'+
+      '<div class="fg"><label>Lokasi / Jalan</label><input class="fc" id="tm-jalan" placeholder="cth: Jl. Sudirman"></div>'+
+      '<div class="fg"><label>Kecamatan</label><select class="fc" id="tm-kec"><option value="">--</option><option>Indramayu</option><option>Sindang</option><option>Jatibarang</option><option>Lohbener</option><option>Haurgeulis</option><option>Kandanghaur</option><option>Lainnya</option></select></div>'+
+    '</div>'+
+    '<div class="frow">'+
+      '<div class="fg"><label>Daya Tersambung (VA)</label><input class="fc" type="number" id="tm-va" placeholder="cth: 5500"></div>'+
+      '<div class="fg"><label>Stand Meter (kWh)</label><input class="fc" type="number" id="tm-stand" placeholder="cth: 12500"></div>'+
+    '</div>'+
+    '<div class="fg"><label>Catatan</label><textarea class="fc" id="tm-note" style="min-height:50px" placeholder="Catatan..."></textarea></div>'+
+
+    '<button class="btn btn-gold btn-full" style="padding:11px;font-size:13px" onclick="submitTagMeter()">⚡ Upload & Simpan KWH Meter</button>'+
+
+    '<div id="tm-results"></div>'+
+
+    '<div class="div"></div>'+
+    '<div class="sec-title">📋 Panduan Upload Meter</div>'+
+    '<div style="font-size:11px;line-height:1.8;color:var(--gray)">'+
+      '1️⃣ Foto close-up &mdash; pastikan nomor PLN terbaca jelas<br>'+
+      '2️⃣ Ambil GPS &mdash; pastikan di dekat lokasi meter<br>'+
+      '3️⃣ Isi ID Gardu & No. PLN (wajib)<br>'+
+      '4️⃣ Submit &mdash; data langsung masuk ke peta jaringan PJU<br>'+
+      '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:7px;margin-top:6px;font-size:10px;color:#92400e">'+
+        '💡 Setelah upload meter, lanjutkan upload titik PJU yang terhubung via menu <strong>Tag PJU</strong>.'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+function submitTagMeter(){
+  var lat=document.getElementById('tm-lat').value;
+  var lng=document.getElementById('tm-lng').value;
+  var gardu=document.getElementById('tm-gardu').value;
+  if(!lat||!lng){showToast('Lokasi GPS wajib diisi!');return;}
+  if(!gardu){showToast('ID Gardu/Meter wajib diisi!');return;}
+  var pln=document.getElementById('tm-pln').value||'—';
+  var jalan=document.getElementById('tm-jalan').value||'—';
+  var results=document.getElementById('tm-results');
+  var card=document.createElement('div');
+  card.className='tag-result';
+  card.style.background='#fffbeb';card.style.borderColor='#fde68a';
+  card.innerHTML='<h4 style="color:#92400e">⚡ KWH Meter Tersimpan!</h4>'+
+    '<p style="color:#a16207">Gardu: '+gardu+' | PLN: '+pln+'<br>📍 '+lat+', '+lng+' | '+jalan+'<br>🕐 '+new Date().toLocaleString('id-ID')+'</p>';
+  results.prepend(card);
+  showToast('⚡ KWH Meter '+gardu+' berhasil di-tag!');
+  // Reset
+  document.getElementById('tm-lat').value='';document.getElementById('tm-lng').value='';
+  document.getElementById('tm-gardu').value='';document.getElementById('tm-pln').value='';
+  var uz=document.getElementById('uz-meter');
+  if(uz){uz.classList.remove('has-photo');uz.innerHTML='<div class="uz-icon">⚡</div><div class="uz-text">Klik untuk foto KWH Meter</div><div class="uz-hint">Pastikan nomor PLN & stand meter terbaca jelas</div><input type="file" id="meter-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-meter\')">';}
+}
+
+// ================================================================
+// PHOTO PREVIEW FOR UPLOAD ZONES
+// ================================================================
+window.previewUpload=function(input,zoneId){
+  var file=input.files[0];
+  if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var zone=document.getElementById(zoneId);
+    if(zone){
+      zone.classList.add('has-photo');
+      zone.innerHTML='<img src="'+e.target.result+'" alt="Preview">'+
+        '<div style="font-size:10px;color:#16a34a;margin-top:4px">✅ Foto berhasil dipilih</div>'+
+        '<input type="file" accept="image/*" capture="environment" onchange="previewUpload(this,\''+zoneId+'\')">';
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
+// ================================================================
+// HIGHLIGHT GARDU PJU on map
+// ================================================================
+window.highlightGarduPJU=function(garduName){
+  map.closePopup();
+  // Flash PJU markers belonging to this gardu
+  var cl=CABLE_LINES.find(function(c){return c.gardu===garduName;});
+  if(!cl) return;
+  // Fly to gardu center
+  map.flyTo(cl.center,15,{duration:1});
+  // Enable cables if not visible
+  if(!showCables){
+    showCables=true;
+    cableLayer.addTo(map);
+    var btn=document.getElementById('mf-kabel');
+    if(btn) btn.classList.add('active');
+  }
+  // Temporarily add highlighted markers
+  var highlights=L.layerGroup();
+  cl.pju_ids.forEach(function(pid){
+    var pju=PJU_DATA.find(function(d){return d[0]===pid;});
+    if(pju&&pju[1]&&pju[2]){
+      L.circleMarker([pju[1],pju[2]],{
+        radius:10,color:'#f5a623',fillColor:'#f5a623',fillOpacity:0.5,weight:2
+      }).addTo(highlights);
+    }
+  });
+  highlights.addTo(map);
+  showToast('🔍 '+cl.n_pju+' PJU dari gardu '+garduName+' disorot');
+  setTimeout(function(){map.removeLayer(highlights);},5000);
+};
+
+// ================================================================
 // INIT
-// ================================================================
-// ================================================================
-// RENDER: CEK TIKET LAPORAN (Publik)
 // ================================================================
 function renderTiket(el){
   el.innerHTML=
