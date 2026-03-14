@@ -170,7 +170,16 @@ function buildPengaduan(){
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><div class="fg"><label>Nama Pelapor</label><input class="fc" id="pa-nama" placeholder="Nama Anda"></div><div class="fg"><label>No. HP / WA</label><input class="fc" id="pa-hp" placeholder="08xxx" inputmode="tel"></div></div>'+
       '<button class="btn btn-danger" style="width:100%;padding:11px;font-size:13px" onclick="submitPengaduan()">🔴 Kirim Pengaduan</button>'+
     '</div></div>'+
-    '<div class="card"><div class="ch"><h3>📋 Info</h3></div><div class="cb" style="font-size:11px;line-height:1.8;color:#666">Konfirmasi: 1 jam<br>Survei lapangan: 1x24 jam<br>Perbaikan ringan: 3-5 hari<br>Perbaikan berat: 7-14 hari</div></div></div></div>';
+    '<div class="card"><div class="ch"><h3>📋 Timeline Proses</h3></div><div class="cb" style="font-size:11px;line-height:1.8;color:#666">'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><div style="width:20px;height:20px;background:var(--a);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">1</div><div><b>Laporan Diterima</b> — konfirmasi 1 jam</div></div>'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><div style="width:20px;height:20px;background:var(--i);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">2</div><div><b>Verifikasi Lapangan</b> — 1x24 jam</div></div>'+
+      '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px"><div style="width:20px;height:20px;background:var(--s);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">3</div><div><b>Perbaikan</b> — 3-14 hari</div></div>'+
+      '<div style="display:flex;gap:8px;align-items:center"><div style="width:20px;height:20px;background:var(--a);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">4</div><div><b>Selesai</b> — notifikasi ke pelapor</div></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="ch"><h3>🔍 Cek Status Pengaduan</h3></div><div class="cb">'+
+      '<div style="display:flex;gap:6px"><input class="fc" id="cek-tiket" placeholder="Masukkan nomor tiket: ADU-xxx" style="flex:1"><button class="btn btn-primary" onclick="cekTiket()">Cek</button></div>'+
+      '<div id="tiket-result" style="margin-top:8px"></div>'+
+    '</div></div></div></div>';
 }
 
 function buildPermohonan(){
@@ -218,19 +227,24 @@ function renderAdmin(){
     '<div class="si" onclick="sp(\'datameter\')"><span class="ic">🔌</span> Data Meter</div>'+
     '<div class="st">MONITORING</div>'+
     '<div class="si" onclick="sp(\'ilegal\')"><span class="ic">⚠️</span> Ilegal/Pencurian <span class="badge">'+(S.an+S.theft)+'</span></div>'+
+    '<div class="si" onclick="sp(\'monitoring\')"><span class="ic">📋</span> Monitoring Pengaduan</div>'+
     '<div class="st">PUBLIK</div>'+
     '<div class="si" onclick="renderPublic()"><span class="ic">🏠</span> Kembali ke Publik</div>'+
     '<div style="padding:14px 16px;margin-top:8px;border-top:1px solid #333;font-size:9px;color:#555">v3.3 Admin PLN/Dishub</div></div>';
 
-  var now=new Date(),days=Math.floor((now-new Date(2025,0,1))/864e5);
-  var tkwh=S.tk*days,tbill=tkwh*1497,apct=S.te>0?Math.round((S.tk-S.te)/S.te*100):0;
+  var now=new Date(),mStart=new Date(2026,2,1),days=Math.floor((now-mStart)/864e5);
+  if(days<1)days=1;
+  var tagihanPerBulan=S.totalTag||1296752028;
+  var tkwh=Math.round(tagihanPerBulan/1497);
+  var tbillBulanIni=Math.round(tagihanPerBulan/30*days);
+  var apct=S.te>0?Math.round((S.tk-S.te)/S.te*100):0;
 
   document.getElementById('mainContent').innerHTML=
     // Dashboard
     '<div class="pg active" id="pg-dashboard"><div class="ph"><h2><span class="phi">📊</span> Dashboard</h2></div>'+
-    '<div class="billing"><div class="bp">✅ Lunas s.d. Mei 2025</div><div class="bt">💰 Estimasi Tagihan (1 Jan 2025 - Hari Ini)</div><div class="ba">Rp '+Math.round(tbill).toLocaleString('id-ID')+'</div><div class="bs">'+days+' hari | Tagihan/bln: Rp '+S.totalTag.toLocaleString('id-ID')+'</div><div class="bg"><div class="bi"><div class="bv">'+Math.round(tkwh).toLocaleString('id-ID')+'</div><div class="bl">Total kWh</div></div><div class="bi"><div class="bv">'+METER_DATA.length+'</div><div class="bl">Meter</div></div><div class="bi"><div class="bv">'+S.ak.toLocaleString('id-ID')+'</div><div class="bl">PJU Aktif</div></div><div class="bi"><div class="bv">'+S.tk.toLocaleString('id-ID')+'</div><div class="bl">kWh/Hari</div></div><div class="bi"><div class="bv">Rp 1.497</div><div class="bl">Tarif</div></div><div class="bi"><div class="bv" style="color:#ff8a8a">+'+apct+'%</div><div class="bl">Anomali</div></div></div></div>'+
+    '<div class="billing"><div class="bp">✅ Lunas s.d. Feb 2026</div><div class="bt">💰 Tagihan Bulan Maret 2026 (1 Mar - Hari Ini)</div><div class="ba">Rp '+tbillBulanIni.toLocaleString('id-ID')+'</div><div class="bs">'+days+' hari dari 1 Maret 2026 | Full bulan: Rp '+tagihanPerBulan.toLocaleString('id-ID')+'</div><div class="bg"><div class="bi"><div class="bv">'+Math.round(tkwh/30*days).toLocaleString('id-ID')+'</div><div class="bl">kWh bulan ini</div></div><div class="bi"><div class="bv">'+METER_DATA.length+'</div><div class="bl">Meter</div></div><div class="bi"><div class="bv">'+S.ak.toLocaleString('id-ID')+'</div><div class="bl">PJU Aktif</div></div><div class="bi"><div class="bv">'+Math.round(tkwh/30).toLocaleString('id-ID')+'</div><div class="bl">kWh/Hari</div></div><div class="bi"><div class="bv">Rp 1.497</div><div class="bl">Tarif</div></div><div class="bi"><div class="bv" style="color:#ff8a8a">+'+apct+'%</div><div class="bl">Anomali</div></div></div></div>'+
     '<div class="sg"><div class="sc" onclick="sp(\'datapju\')"><div class="si2" style="background:rgba(52,152,219,.1);color:var(--i)">💡</div><div><div class="n" style="color:var(--i)">'+S.tp.toLocaleString('id-ID')+'</div><div class="l">Total PJU</div></div></div><div class="sc"><div class="si2" style="background:rgba(39,174,96,.1);color:var(--a)">✅</div><div><div class="n" style="color:var(--a)">'+S.ak.toLocaleString('id-ID')+'</div><div class="l">Aktif</div></div></div><div class="sc"><div class="si2" style="background:rgba(231,76,60,.1);color:var(--d)">❌</div><div><div class="n" style="color:var(--d)">'+S.mt+'</div><div class="l">Mati</div></div></div><div class="sc" onclick="sp(\'datameter\')"><div class="si2" style="background:rgba(155,89,182,.1);color:#9b59b6">⚡</div><div><div class="n" style="color:#9b59b6">'+METER_DATA.length+'</div><div class="l">Meter</div></div></div><div class="sc" onclick="sp(\'ilegal\')"><div class="si2" style="background:rgba(231,76,60,.15);color:#991b1b">🔴</div><div><div class="n" style="color:#991b1b">'+(S.an+S.theft)+'</div><div class="l">Ilegal ('+S.theft+' Rp0)</div></div></div></div>'+
-    '<div class="g2"><div class="card"><div class="ch"><h3><i class="fas fa-chart-bar"></i> PJU/ULP</h3></div><div class="cb"><div class="cc"><canvas id="cULP"></canvas></div></div></div><div class="card"><div class="ch"><h3><i class="fas fa-chart-pie"></i> Status</h3></div><div class="cb"><div class="cc"><canvas id="cStat"></canvas></div></div></div></div></div>'+
+    '<div class="g2"><div class="card"><div class="ch"><h3><i class="fas fa-chart-bar"></i> PJU per ULP</h3></div><div class="cb"><div class="cc"><canvas id="cULP"></canvas></div></div></div><div class="card"><div class="ch"><h3><i class="fas fa-chart-line"></i> Tren Tagihan 6 Bulan</h3></div><div class="cb"><div class="cc"><canvas id="cTrend"></canvas></div></div></div></div><div class="g2"><div class="card"><div class="ch"><h3><i class="fas fa-chart-pie"></i> Status PJU</h3></div><div class="cb"><div class="cc"><canvas id="cStat"></canvas></div></div></div><div class="card"><div class="ch"><h3><i class="fas fa-history"></i> Aktivitas Terbaru</h3></div><div class="cb"><div style="font-size:11px;line-height:2">📸 Foto PJU baru diupload — 10 menit lalu<br>✅ Meter MTR-HPSG di-tag — 1 jam lalu<br>⚠️ Anomali MTR-POMI +65% — 3 jam lalu<br>🔴 Pengaduan baru: Jl. Sindang — 5 jam lalu<br>✅ Pengaduan ADU-001 selesai — kemarin</div></div></div></div></div>'+
     // Peta Admin
     '<div class="pg" id="pg-petaadmin"><div class="ph"><h2><span class="phi">🗺️</span> Peta & Visualisasi</h2></div>'+
     '<div class="alert">Klik <b>⚡ Meter</b>: foto, tagihan, PJU, daya, anomali. Klik <b>💡 PJU</b>: foto, jenis, daya. <b style="color:#991b1b">Merah gelap = Tagihan Rp 0 (Pencurian)</b></div>'+
@@ -260,10 +274,15 @@ function renderAdmin(){
     // Data Meter
     '<div class="pg" id="pg-datameter"><div class="ph"><h2><span class="phi">🔌</span> Data Meter</h2></div><div class="card"><div class="ch"><h3>Daftar</h3></div><div class="cb"><div class="tw"><table><thead><tr><th>Meter</th><th>Gardu</th><th>ULP</th><th>PJU</th><th>Daya</th><th>Tagihan</th><th>Status</th></tr></thead><tbody id="tMB"></tbody></table></div></div></div></div>'+
     // Ilegal
-    '<div class="pg" id="pg-ilegal"><div class="ph"><h2><span class="phi">⚠️</span> Ilegal & Pencurian</h2></div><div class="alert" style="border-color:var(--d);background:rgba(231,76,60,.05);color:#991b1b">🔴 Tagihan Rp 0 = Pencurian (bypass). ⚠️ Anomali >20% = beban tidak terdaftar.</div><div class="sg" id="iS"></div><div class="card"><div class="ch"><h3>Meter Bermasalah</h3></div><div class="cb" id="iL"></div></div></div>';
+    '<div class="pg" id="pg-ilegal"><div class="ph"><h2><span class="phi">⚠️</span> Ilegal & Pencurian</h2></div><div class="alert" style="border-color:var(--d);background:rgba(231,76,60,.05);color:#991b1b">🔴 Tagihan Rp 0 = Pencurian (bypass). ⚠️ Anomali >20% = beban tidak terdaftar.</div><div class="sg" id="iS"></div><div class="card"><div class="ch"><h3>Meter Bermasalah</h3></div><div class="cb" id="iL"></div></div></div>'+
+    // Monitoring Pengaduan
+    '<div class="pg" id="pg-monitoring"><div class="ph"><h2><span class="phi">📋</span> Monitoring Pengaduan</h2></div>'+
+    '<div class="alert">📋 Tracking progress pengaduan dari lapor → verifikasi → perbaikan → selesai</div>'+
+    '<div class="sg"><div class="sc"><div class="si2" style="background:rgba(231,76,60,.1);color:var(--d)">🔴</div><div><div class="n" style="color:var(--d)" id="mon-baru">0</div><div class="l">Baru</div></div></div><div class="sc"><div class="si2" style="background:rgba(243,156,18,.1);color:var(--s)">⏳</div><div><div class="n" style="color:var(--s)" id="mon-proses">0</div><div class="l">Diproses</div></div></div><div class="sc"><div class="si2" style="background:rgba(39,174,96,.1);color:var(--a)">✅</div><div><div class="n" style="color:var(--a)" id="mon-selesai">0</div><div class="l">Selesai</div></div></div></div>'+
+    '<div id="monList"></div></div>';
 
   // Init admin components
-  initCharts();initGarduSel();initTables();initIlegal();
+  initCharts();initGarduSel();initTables();initIlegal();setTimeout(loadMonitoring,500);
   if(map){map.remove();map=null}initMap();
 }
 
@@ -336,9 +355,10 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')document.get
 
 // ===== ADMIN FUNCS =====
 function initCharts(){
-  var e1=document.getElementById('cULP'),e2=document.getElementById('cStat');if(!e1||!e2)return;
-  new Chart(e1,{type:'bar',data:{labels:Object.keys(S.ul),datasets:[{label:'PJU',data:Object.values(S.ul),backgroundColor:['#3498db','#27ae60','#e67e22','#9b59b6'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  new Chart(e2,{type:'doughnut',data:{labels:['Aktif','Mati'],datasets:[{data:[S.ak,S.mt],backgroundColor:['#27ae60','#e74c3c'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom'}}}});
+  var e1=document.getElementById('cULP'),e2=document.getElementById('cStat'),e3=document.getElementById('cTrend');
+  if(e1)new Chart(e1,{type:'bar',data:{labels:Object.keys(S.ul),datasets:[{label:'PJU',data:Object.values(S.ul),backgroundColor:['#3498db','#27ae60','#e67e22','#9b59b6'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  if(e2)new Chart(e2,{type:'doughnut',data:{labels:['Aktif ('+S.ak+')','Mati ('+S.mt+')'],datasets:[{data:[S.ak,S.mt],backgroundColor:['#27ae60','#e74c3c'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom'}}}});
+  if(e3){var tb=S.totalTag||1296752028;new Chart(e3,{type:'line',data:{labels:['Okt','Nov','Des','Jan','Feb','Mar'],datasets:[{label:'Tagihan (Jt Rp)',data:[Math.round(tb*.95/1e6),Math.round(tb*.97/1e6),Math.round(tb*1.02/1e6),Math.round(tb*.98/1e6),Math.round(tb*1.01/1e6),Math.round(tb/1e6)],borderColor:'#e74c3c',backgroundColor:'rgba(231,76,60,.08)',fill:true,tension:.4,pointRadius:4},{label:'kWh (ribu)',data:[Math.round(tb*.95/1497/1e3),Math.round(tb*.97/1497/1e3),Math.round(tb*1.02/1497/1e3),Math.round(tb*.98/1497/1e3),Math.round(tb*1.01/1497/1e3),Math.round(tb/1497/1e3)],borderColor:'#3498db',backgroundColor:'rgba(52,152,219,.08)',fill:true,tension:.4,pointRadius:4,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{position:'left',title:{display:true,text:'Jt Rp',font:{size:10}}},y1:{position:'right',title:{display:true,text:'ribu kWh',font:{size:10}},grid:{drawOnChartArea:false}}}}});}
 }
 function initGarduSel(){var s=document.getElementById('tp-gardu');if(!s)return;METER_DATA.forEach(function(m){var o=document.createElement('option');o.value=m.gardu;o.textContent=m.gardu+' ('+m.jmlPJU+') '+m.ulp+(m.status==='anomali'?' ⚠️':'');s.appendChild(o)})}
 window.sGI=function(v){var b=document.getElementById('tp-info');if(!v){b.className='mib';return}var m=METER_DATA.find(function(x){return x.gardu===v});if(!m){b.className='mib';return}b.className='mib show';b.innerHTML='<b>⚡'+m.id+'</b> '+m.ulp+(m.tagihanBln===0?' <span style="color:#991b1b">🔴PENCURIAN</span>':m.status==='anomali'?' <span style="color:#dc2626">⚠️</span>':'')+'<br>'+m.jmlPJU+' PJU | '+(m.totalDaya/1e3).toFixed(1)+'kW | Rp'+(m.tagihanBln/1e6).toFixed(1)+'Jt/bln'};
@@ -362,11 +382,30 @@ window.fT=function(v){document.querySelectorAll('#tPB tr').forEach(function(r){r
 
 // ===== UPLOAD & GPS =====
 window.pU=function(i,z){var f=i.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){var el=document.getElementById(z);el.classList.add('hp');el.innerHTML='<img src="'+e.target.result+'"><div style="font-size:9px;color:#27ae60;margin-top:2px">✅ OK</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\''+z+'\')">'};r.readAsDataURL(f)};
-window.gG=function(a,b,btn){if(!navigator.geolocation){alert('GPS tidak tersedia');return}btn.innerHTML='📡 Mengambil...';btn.disabled=true;navigator.geolocation.getCurrentPosition(function(p){document.getElementById(a).value=p.coords.latitude.toFixed(6);document.getElementById(b).value=p.coords.longitude.toFixed(6);btn.innerHTML='✅ OK!';btn.style.background='#27ae60';var lat=p.coords.latitude,lng=p.coords.longitude,best=null,bd=Infinity;METER_DATA.forEach(function(m){var d=Math.sqrt(Math.pow(m.lat-lat,2)+Math.pow(m.lng-lng,2));if(d<bd){bd=d;best=m}});if(best&&document.getElementById('tp-gardu')){document.getElementById('tp-gardu').value=best.gardu;sGI(best.gardu)}setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis';btn.style.background='';btn.disabled=false},2500)},function(){btn.innerHTML='❌ Gagal';btn.disabled=false;setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis'},2e3)},{enableHighAccuracy:true,timeout:15000})};
+window.gG=function(a,b,btn){if(!navigator.geolocation){alert('GPS tidak tersedia');return}btn.innerHTML='📡 Mengambil...';btn.disabled=true;navigator.geolocation.getCurrentPosition(function(p){document.getElementById(a).value=p.coords.latitude.toFixed(6);document.getElementById(b).value=p.coords.longitude.toFixed(6);btn.innerHTML='✅ OK!';btn.style.background='#27ae60';var lat=p.coords.latitude,lng=p.coords.longitude,best=null,bd=Infinity;METER_DATA.forEach(function(m){var d=Math.sqrt(Math.pow(m.lat-lat,2)+Math.pow(m.lng-lng,2));if(d<bd){bd=d;best=m}});if(best&&document.getElementById('tp-gardu')){document.getElementById('tp-gardu').value=best.gardu;sGI(best.gardu);showM('📍 GPS OK! Induk meter terdeteksi: '+best.id+' ('+best.gardu+') — '+best.ulp+'. Jarak: '+(Math.round(bd*111000))+'m')}setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis';btn.style.background='';btn.disabled=false},2500)},function(){btn.innerHTML='❌ Gagal';btn.disabled=false;setTimeout(function(){btn.innerHTML='📱 Ambil GPS Otomatis'},2e3)},{enableHighAccuracy:true,timeout:15000})};
 window.sPJU=function(){var la=document.getElementById('tp-lat').value,lo=document.getElementById('tp-lng').value,g=document.getElementById('tp-gardu').value;if(!la||!lo){alert('GPS wajib!');return}if(!g){alert('Pilih Meter!');return}var h=document.getElementById('th');if(h.textContent.indexOf('Belum')>-1)h.innerHTML='';var c=document.createElement('div');c.style.cssText='background:'+(isLeg?'#f0fff4':'#fef2f2')+';border:1.5px solid '+(isLeg?'#86efac':'#fca5a5')+';border-radius:6px;padding:8px;margin-bottom:5px;font-size:10px';c.innerHTML='<b style="color:'+(isLeg?'#166534':'#991b1b')+'">'+(isLeg?'✅Legal':'🔴ILEGAL')+' → '+g+'</b><br>📍'+la+','+lo+' | '+new Date().toLocaleTimeString('id-ID');h.prepend(c);sbInsert('pju_points',{gardu:g,lat:parseFloat(la),lng:parseFloat(lo),jenis_lampu:(document.getElementById('tp-j')||{}).value||'LED',daya:parseInt((document.getElementById('tp-d')||{}).value)||900,status:'aktif',is_legal:isLeg});showM('PJU di-tag ke '+g+(isLeg?'':' (ILEGAL)')+'. Tersimpan ke database.');['tp-lat','tp-lng','tp-d'].forEach(function(x){document.getElementById(x).value=''});document.getElementById('tp-gardu').value='';document.getElementById('tp-info').className='mib';var uz=document.getElementById('uz-pju');uz.classList.remove('hp');uz.innerHTML='<div style="font-size:28px">📷</div><div style="color:#888;font-size:11px">Buka kamera HP</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-pju\')">'};
 window.sMTR=function(){var la=document.getElementById('tm-lat').value,lo=document.getElementById('tm-lng').value,g=document.getElementById('tm-g').value;if(!la||!lo){alert('GPS wajib!');return}if(!g){alert('ID Gardu wajib!');return}var h=document.getElementById('mh');if(h.textContent.indexOf('Belum')>-1)h.innerHTML='';var c=document.createElement('div');c.style.cssText='background:#fffbeb;border:1.5px solid #fde68a;border-radius:6px;padding:8px;margin-bottom:5px;font-size:10px';c.innerHTML='<b style="color:#92400e">⚡'+g+' Tersimpan</b><br>📍'+la+','+lo;h.prepend(c);sbInsert('kwh_meters',{gardu:g,no_pln:(document.getElementById('tm-p')||{}).value||'',ulp:(document.getElementById('tm-u')||{}).value||'',lat:parseFloat(la),lng:parseFloat(lo),status:'normal'});showM('Meter '+g+' tersimpan ke database!');['tm-lat','tm-lng','tm-g','tm-p'].forEach(function(x){document.getElementById(x).value=''});var uz=document.getElementById('uz-meter');uz.classList.remove('hp');uz.innerHTML='<div style="font-size:28px">⚡</div><div style="color:#888;font-size:11px">Foto KWH Meter</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-meter\')">'};
 
 // ===== PUBLIC SUBMIT (Supabase) =====
+window.cekTiket=function(){
+  var t=(document.getElementById('cek-tiket')||{}).value.trim().toUpperCase();
+  var el=document.getElementById('tiket-result');
+  if(!t){el.innerHTML='<div style="color:var(--d);font-size:11px">Masukkan nomor tiket</div>';return}
+  if(sb){
+    sb.from('pengaduan').select('*').eq('nomor_tiket',t).single().then(function(r){
+      if(r.data){
+        var p=r.data,prog=p.status==='baru'?15:p.status==='proses'?55:100;
+        var bc=p.status==='baru'?'var(--d)':p.status==='proses'?'var(--s)':'var(--a)';
+        el.innerHTML='<div style="border-left:3px solid '+bc+';padding:10px;border-radius:0 6px 6px 0;background:#fafafa">'+
+          '<b>'+p.nomor_tiket+'</b> — <span class="sb '+(p.status==='selesai'?'sb-g':'sb-r')+'">'+(p.status==='baru'?'🔴 Baru':p.status==='proses'?'⏳ Diproses':'✅ Selesai')+'</span><br>'+
+          '<span style="font-size:11px;color:#666">'+p.lokasi+' | '+p.jenis_masalah+'</span><br>'+
+          '<div style="margin-top:6px;height:4px;background:#e2e8f0;border-radius:2px"><div style="width:'+prog+'%;height:100%;background:'+bc+';border-radius:2px"></div></div>'+
+          '<div style="display:flex;gap:10px;margin-top:4px;font-size:9px;color:#888"><span style="color:'+(prog>=15?'var(--a)':'#ccc')+'">● Diterima</span><span style="color:'+(prog>=40?'var(--a)':'#ccc')+'">● Verifikasi</span><span style="color:'+(prog>=70?'var(--a)':'#ccc')+'">● Perbaikan</span><span style="color:'+(prog>=100?'var(--a)':'#ccc')+'">● Selesai</span></div>'+
+        '</div>';
+      }else{el.innerHTML='<div style="color:var(--d);font-size:11px">❌ Tiket '+t+' tidak ditemukan</div>';}
+    });
+  }else{el.innerHTML='<div style="color:var(--s);font-size:11px">Database offline. Coba lagi nanti.</div>';}
+};
 window.submitPengaduan=function(){var l=document.getElementById('pa-lok').value;if(!l){alert('Isi lokasi!');return}sbInsert('pengaduan',{lokasi:l,jenis_masalah:(document.getElementById('pa-jenis')||{}).value||'Lampu mati',keterangan:(document.getElementById('pa-ket')||{}).value||'',nama_pelapor:(document.getElementById('pa-nama')||{}).value||'Anonim',no_hp:(document.getElementById('pa-hp')||{}).value||''}).then(function(r){showM('Pengaduan terkirim!'+(r&&r.nomor_tiket?' Tiket: '+r.nomor_tiket:''))});document.getElementById('pa-lok').value='';document.getElementById('pa-ket').value='';};
 window.submitPermohonan=function(){var l=document.getElementById('pm-lok').value;if(!l){alert('Isi lokasi!');return}sbInsert('permohonan',{lokasi:l,kecamatan:(document.getElementById('pm-kec')||{}).value||'',alasan:(document.getElementById('pm-alasan')||{}).value||'',nama_pemohon:(document.getElementById('pm-nama')||{}).value||'Anonim',no_hp:(document.getElementById('pm-hp')||{}).value||''}).then(function(r){showM('Permohonan terkirim!'+(r&&r.nomor_permohonan?' No: '+r.nomor_permohonan:''))});document.getElementById('pm-lok').value='';document.getElementById('pm-alasan').value='';};
 window.submitIlegal=function(){var l=document.getElementById('pi-lok').value;if(!l){alert('Isi lokasi!');return}sbInsert('laporan_ilegal',{lokasi:l,keterangan:(document.getElementById('pi-ket')||{}).value||'',nama_pelapor:(document.getElementById('pi-nama')||{}).value||'Anonim'}).then(function(r){showM('Laporan terkirim!'+(r&&r.nomor_laporan?' No: '+r.nomor_laporan:''))});document.getElementById('pi-lok').value='';document.getElementById('pi-ket').value='';};
@@ -376,6 +415,60 @@ window.doLogin=function(){var u=(document.getElementById('lu')||{}).value,p=(doc
 
 // ===== NAV =====
 window.sp=function(id){document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active')});document.querySelectorAll('.si').forEach(function(s){s.classList.remove('active')});var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');document.querySelectorAll('.si').forEach(function(s){if(s.getAttribute('onclick')&&s.getAttribute('onclick').indexOf("'"+id+"'")>-1)s.classList.add('active')});if((id==='petapublik'||id==='petaadmin')&&map)setTimeout(function(){map.invalidateSize()},150);if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open')};
+
+// ===== MONITORING PENGADUAN =====
+var pengaduanList=[];
+function loadMonitoring(){
+  var el=document.getElementById('monList');if(!el)return;
+  // Try load from Supabase
+  if(sb&&SUPABASE_URL!=='PLACEHOLDER_URL'){
+    sb.from('pengaduan').select('*').order('created_at',{ascending:false}).limit(30).then(function(r){
+      if(r.data&&r.data.length>0){pengaduanList=r.data;renderMonitoring();}
+      else renderMonitoring();
+    });
+  }else renderMonitoring();
+}
+function renderMonitoring(){
+  var el=document.getElementById('monList');if(!el)return;
+  var baru=pengaduanList.filter(function(p){return p.status==='baru'}).length;
+  var proses=pengaduanList.filter(function(p){return p.status==='proses'}).length;
+  var selesai=pengaduanList.filter(function(p){return p.status==='selesai'}).length;
+  var eb=document.getElementById('mon-baru');if(eb)eb.textContent=baru;
+  var ep=document.getElementById('mon-proses');if(ep)ep.textContent=proses;
+  var es=document.getElementById('mon-selesai');if(es)es.textContent=selesai;
+  var html='';
+  pengaduanList.forEach(function(p){
+    var bc=p.status==='baru'?'var(--d)':p.status==='proses'?'var(--s)':'var(--a)';
+    var icon=p.status==='baru'?'🔴':p.status==='proses'?'⏳':'✅';
+    var label=p.status==='baru'?'Baru':p.status==='proses'?'Diproses':'Selesai';
+    var prog=p.status==='baru'?15:p.status==='proses'?55:100;
+    var dt=p.created_at?new Date(p.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    html+='<div class="card" style="border-left:3px solid '+bc+';margin-bottom:8px"><div class="cb" style="padding:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+        '<div><b style="font-size:12px">'+(p.nomor_tiket||'ADU-???')+'</b> <span class="sb '+(p.status==='selesai'?'sb-g':p.status==='proses'?'sb-p':'sb-r')+'">'+icon+' '+label+'</span></div>'+
+        (p.status!=='selesai'?'<div style="display:flex;gap:4px">'+(p.status==='baru'?'<button class="btn btn-warning btn-sm" onclick="updPengaduan(\''+p.id+'\',\'proses\')">⏳ Proses</button>':'')+'<button class="btn btn-success btn-sm" onclick="updPengaduan(\''+p.id+'\',\'selesai\')">✅ Selesai</button></div>':'<span style="font-size:10px;color:var(--a)">✅ Ditangani</span>')+
+      '</div>'+
+      '<div style="font-size:11px;color:#666">📍 '+(p.lokasi||'-')+' | '+(p.jenis_masalah||'-')+'</div>'+
+      '<div style="font-size:10px;color:#888;margin-top:2px">👤 '+(p.nama_pelapor||'Anonim')+' | 🕐 '+dt+'</div>'+
+      '<div style="margin-top:6px"><div style="display:flex;justify-content:space-between;font-size:9px;color:#888"><span>Progress</span><span>'+prog+'%</span></div><div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden;margin-top:2px"><div style="width:'+prog+'%;height:100%;background:'+bc+';border-radius:2px"></div></div></div>'+
+      '<div style="display:flex;gap:12px;margin-top:6px;font-size:9px;color:#888">'+
+        '<span style="color:'+(prog>=15?'var(--a)':'#ccc')+'">● Diterima</span>'+
+        '<span style="color:'+(prog>=40?'var(--a)':'#ccc')+'">● Verifikasi</span>'+
+        '<span style="color:'+(prog>=70?'var(--a)':'#ccc')+'">● Perbaikan</span>'+
+        '<span style="color:'+(prog>=100?'var(--a)':'#ccc')+'">● Selesai</span>'+
+      '</div>'+
+    '</div></div>';
+  });
+  if(!html)html='<div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Belum ada pengaduan</div>';
+  el.innerHTML=html;
+}
+window.updPengaduan=function(id,status){
+  var p=pengaduanList.find(function(x){return x.id===id});
+  if(p)p.status=status;
+  if(sb)sb.from('pengaduan').update({status:status}).eq('id',id);
+  renderMonitoring();
+  showM('Status pengaduan diupdate: '+status);
+};
 
 // ===== UTILS =====
 function showM(m){var el=document.getElementById('modal');el.innerHTML='<div class="modal"><div style="font-size:40px;margin-bottom:8px">✅</div><p style="font-size:12px;color:#555">'+m+'</p><button class="btn btn-primary" style="margin-top:10px" onclick="document.getElementById(\'modal\').style.display=\'none\'">OK</button></div>';el.style.display='flex'}
