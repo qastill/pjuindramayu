@@ -151,7 +151,7 @@ function renderPublic(){
     '<div class="pg active" id="pg-public">'+
       '<div class="public-hero" style="padding:14px 20px;margin-bottom:12px"><h1 style="font-size:18px">💡 SIPJU Indramayu</h1><p style="font-size:10px">Sistem Informasi Penerangan Jalan Umum — Kab. Indramayu</p></div>'+
       '<div class="legend-bar" style="margin-bottom:6px"><b>Peta PJU:</b> 🟢Aktif 🔴Mati <span style="color:#e67e22">⚡</span>Meter ━Kabel ⬛Zona Gelap</div>'+
-      '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">🗺️Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴Mati</button><button class="btn btn-info btn-sm" onclick="tC()">🔗Kabel</button><button class="btn btn-sm" style="background:#333;color:#fff" onclick="tZ()">🌑Gelap</button></div>'+
+      '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">🗺️Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴Mati</button><button class="btn btn-info btn-sm" onclick="tC()">🔗Kabel</button><button class="btn btn-sm" style="background:#333;color:#fff" onclick="tZ()">🌑Gelap</button><button class="btn btn-sm" style="background:#0a1628;color:#ffd700" onclick="tN()">🌙NASA</button></div>'+
       '<div id="map-container" style="height:55vh;min-height:300px;margin-bottom:16px"></div>'+
       '<div class="service-grid">'+
         '<div class="service-card" onclick="sp(\'pengaduan\')"><div class="s-icon">🔴</div><h3>Pengaduan Lampu Mati</h3><p>Laporkan PJU yang mati atau rusak</p></div>'+
@@ -267,7 +267,7 @@ function renderAdmin(){
     '<div class="pg" id="pg-petaadmin"><div class="ph"><h2><span class="phi">🗺️</span> Peta & Visualisasi</h2></div>'+
     '<div class="alert">Klik <b>⚡ Meter</b>: foto, tagihan, PJU, daya, anomali. Klik <b>💡 PJU</b>: foto, jenis, daya. <b style="color:#991b1b">Merah gelap = Tagihan Rp 0 (Pencurian)</b></div>'+
     '<div class="legend-bar"><b>Legenda:</b> 🟢Legal 🔴Ilegal/Pencurian <span style="color:#e67e22">⚡</span>Meter <span style="color:#3498db">━</span>Kabel ⬛Zona Gelap</div>'+
-    '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴Mati</button><button class="btn btn-sm" style="background:#9b59b6;color:#fff" onclick="fM(\'ilegal\')">⚠️Anomali</button><button class="btn btn-info btn-sm" onclick="tC()">🔗Kabel</button><button class="btn btn-sm" style="background:#333;color:#fff" onclick="tZ()">🌑Gelap</button></div>'+
+    '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴Mati</button><button class="btn btn-sm" style="background:#9b59b6;color:#fff" onclick="fM(\'ilegal\')">⚠️Anomali</button><button class="btn btn-info btn-sm" onclick="tC()">🔗Kabel</button><button class="btn btn-sm" style="background:#333;color:#fff" onclick="tZ()">🌑Gelap</button><button class="btn btn-sm" style="background:#0a1628;color:#ffd700" onclick="tN()">🌙NASA</button></div>'+
     '<div id="map-container"></div></div>'+
     // Tag PJU
     '<div class="pg" id="pg-tagpju"><div class="ph"><h2><span class="phi">📸</span> Upload & Tag PJU</h2></div><div class="alert">📸 Petugas: Foto → GPS → Pilih Meter → Status Legal/Ilegal → Simpan</div>'+
@@ -314,7 +314,12 @@ function initMap(){
   var satLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Esri'});
   var hybridLayer=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
   satLayer.addTo(map);hybridLayer.addTo(map);
-  L.control.layers({'🗺️ Peta':osmLayer,'🛰️ Satelit':satLayer},{},{ position:'topright' }).addTo(map);
+  var nightLayer=L.tileLayer('https://map1.vis.earthdata.nasa.gov/wmts-webmerc/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',{maxZoom:8,minZoom:1,opacity:.7,attribution:'NASA VIIRS'});
+  L.control.layers({
+    '🗺️ Peta':osmLayer,
+    '🛰️ Satelit':satLayer,
+    '🌙 Cahaya Malam (NASA)':nightLayer
+  },{},{ position:'topright' }).addTo(map);
   mL=L.layerGroup().addTo(map);
   cL=L.layerGroup();
   // Dark zones
@@ -423,6 +428,11 @@ function drawCables(){
 window.fM=function(f){rM(f)};
 window.tC=function(){cV=!cV;if(cV){drawCables();cL.addTo(map)}else{map.removeLayer(cL)}};
 window.tZ=function(){zV=!zV;if(zV)zL.addTo(map);else map.removeLayer(zL)};
+var nV=false,nL2=null;
+window.tN=function(){nV=!nV;if(nV){
+  if(!nL2)nL2=L.tileLayer('https://map1.vis.earthdata.nasa.gov/wmts-webmerc/VIIRS_CityLights_2012/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg',{maxZoom:8,opacity:.6});
+  nL2.addTo(map);map.setZoom(Math.min(map.getZoom(),8));showM('🌙 NASA VIIRS Nighttime Lights aktif.\nArea terang = ada penerangan.\nArea gelap = butuh PJU.\n\nZoom max level 8 untuk layer ini.')
+}else{if(nL2)map.removeLayer(nL2)}};
 window.openPV=function(u,c){document.getElementById('pv-img').src=u;document.getElementById('pv-cap').textContent=c||'';document.getElementById('pv').classList.add('open')};
 document.addEventListener('keydown',function(e){if(e.key==='Escape')document.getElementById('pv').classList.remove('open')});
 
