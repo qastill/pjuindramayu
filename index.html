@@ -354,10 +354,10 @@ select.fc{cursor:pointer}
     </div>
   </div>
   <div id="topnav">
-    <button class="tnav-btn active" id="nb-home" onclick="openPanel('home')">Peta & Statistik</button>
-    <button class="tnav-btn" id="nb-lapor" onclick="openPanel('lapor')">Lapor PJU</button>
-    <button class="tnav-btn" id="nb-pasang" onclick="openPanel('pasang')">Minta Pasang</button>
-    <button class="tnav-btn" id="nb-forum" onclick="openPanel('forum')">Forum Warga</button>
+    <button class="tnav-btn active" id="nb-home" onclick="openPanel('home')">📊 Statistik</button>
+    <button class="tnav-btn" id="nb-lapor" onclick="openPanel('lapor')">📸 Lapor PJU</button>
+    <button class="tnav-btn" id="nb-pasang" onclick="openPanel('pasang')">💡 Minta Pasang</button>
+    <button class="tnav-btn" id="nb-forum" onclick="openPanel('forum')">💬 Forum Warga</button>
   </div>
   <div class="topbar-right">
     <span class="clock" id="clock"></span>
@@ -379,38 +379,38 @@ select.fc{cursor:pointer}
     <!-- Toolbar -->
     <div id="map-toolbar">
       <button class="mf-btn active" id="mf-all" onclick="mapFilter('all',this)">
-        <span class="mf-dot" style="background:#334155"></span>Semua
+        🗺️ Semua PJU
       </button>
       <button class="mf-btn" id="mf-normal" onclick="mapFilter('normal',this)">
-        <span class="mf-dot" style="background:#16a34a"></span>Normal
+        💡 Normal
       </button>
       <button class="mf-btn" id="mf-mati" onclick="mapFilter('mati',this)">
-        <span class="mf-dot" style="background:#dc2626"></span>Mati
+        🔴 Mati
       </button>
       <button class="mf-btn" id="mf-anomali" onclick="mapFilter('anomali',this)">
-        <span class="mf-dot" style="background:#7c3aed"></span>Anomali
+        ⚠️ Anomali
       </button>
       <button class="mf-btn" id="mf-gelap" onclick="toggleDarkZones(this)">
-        <span class="mf-dot" style="background:#334155;opacity:.4"></span>Zona Gelap
+        🌑 Zona Gelap
       </button>
       <button class="mf-btn" id="mf-kabel" onclick="toggleCables(this)">
-        Jalur Kabel
+        🔌 Jalur Kabel
       </button>
     </div>
 
     <!-- Legend -->
     <div id="map-legend">
       <h4>Legenda</h4>
-      <div class="leg-row"><span class="leg-dot" style="background:#16a34a"></span>Normal <span class="leg-count" id="lc-normal" style="color:#16a34a"></span></div>
-      <div class="leg-row"><span class="leg-dot" style="background:#dc2626"></span>Mati <span class="leg-count" id="lc-mati" style="color:#dc2626"></span></div>
-      <div class="leg-row"><span class="leg-dot" style="background:#f97316"></span>Berkedip <span class="leg-count" id="lc-berkedip" style="color:#f97316"></span></div>
-      <div class="leg-row"><span class="leg-dot" style="background:#7c3aed"></span>Anomali* <span class="leg-count" id="lc-anomali" style="color:#7c3aed"></span></div>
-      <div class="leg-row"><span class="leg-dot" style="background:#64748b"></span>Bongkar <span class="leg-count" id="lc-bongkar" style="color:#64748b"></span></div>
+      <div class="leg-row">💡 <span style="color:#16a34a;font-weight:700">Normal</span><span class="leg-count" id="lc-normal" style="color:#16a34a"></span></div>
+      <div class="leg-row">🔴 <span style="color:#dc2626;font-weight:700">Mati</span><span class="leg-count" id="lc-mati" style="color:#dc2626"></span></div>
+      <div class="leg-row">🟡 <span style="color:#f97316;font-weight:700">Berkedip</span><span class="leg-count" id="lc-berkedip" style="color:#f97316"></span></div>
+      <div class="leg-row">⚠️ <span style="color:#7c3aed;font-weight:700">Anomali</span><span class="leg-count" id="lc-anomali" style="color:#7c3aed"></span></div>
+      <div class="leg-row">🔲 <span style="color:#64748b;font-weight:700">Bongkar</span><span class="leg-count" id="lc-bongkar" style="color:#64748b"></span></div>
       <div style="border-top:1px solid rgba(255,255,255,.1);margin:6px 0 4px"></div>
-      <div class="leg-row"><span class="leg-line" style="background:#f5a623"></span>Jalur kabel aktif</div>
-      <div class="leg-row"><span class="leg-line" style="background:#7c3aed;opacity:.7"></span>Jalur kabel anomali</div>
-      <div class="leg-row"><span class="leg-dot" style="background:#1e293b;opacity:.25;width:12px;height:12px;border-radius:3px"></span>Zona gelap</div>
-      <div style="margin-top:5px;font-size:9px;color:rgba(255,255,255,.35)">*Indikasi pencurian/penyalahgunaan listrik</div>
+      <div class="leg-row">🔌 <span>Jalur kabel aktif</span></div>
+      <div class="leg-row">⚡ <span>Jalur kabel anomali</span></div>
+      <div class="leg-row">🌑 <span>Zona gelap / tanpa PJU</span></div>
+      <div style="margin-top:5px;font-size:9px;color:rgba(255,255,255,.35)">⚠️ Anomali = indikasi pencurian listrik</div>
     </div>
 
     <button id="locate-me" onclick="locateUser()" title="Lokasi saya">&#8982;</button>
@@ -678,12 +678,12 @@ function buildPop(d){
     // ── Photo toggle tabs ──
     '<div style="display:flex;gap:0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;margin-bottom:8px">'+
       '<button id="'+uid+'_btn_pju" onclick="togglePopPhoto(\''+uid+'\',\'pju\')" '+
-        'style="flex:1;padding:5px 4px;border:none;background:#0f2340;color:#f5a623;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;border-right:1px solid #e2e8f0">'+
-        '&#128247; Foto PJU'+
+        'style="flex:1;padding:6px 4px;border:none;background:#0f2340;color:#f5a623;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border-right:1px solid #e2e8f0">'+
+        '🔦 Foto PJU'+
       '</button>'+
       '<button id="'+uid+'_btn_meter" onclick="togglePopPhoto(\''+uid+'\',\'meter\')" '+
-        'style="flex:1;padding:5px 4px;border:none;background:#fff;color:#64748b;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">'+
-        '&#9889; Foto kWh Meter'+
+        'style="flex:1;padding:6px 4px;border:none;background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+
+        '📊 Foto kWh Meter'+
       '</button>'+
     '</div>'+
     // ── Photo PJU ──
@@ -692,7 +692,7 @@ function buildPop(d){
         'style="width:100%;height:105px;object-fit:cover;border-radius:6px;cursor:pointer;display:block" '+
         'onclick="openPV(\''+photoPJU+'\',\'Foto PJU – '+d[0]+'\')">'+
       '<div style="position:absolute;bottom:4px;left:5px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px">'+
-        'Titik PJU – klik untuk perbesar'+
+        '🔦 Titik PJU — klik perbesar'+
       '</div>'+
       '<div style="position:absolute;top:4px;right:5px;background:'+(st==='normal'?'#16a34a':c)+';color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px">'+
         stLabel+
@@ -704,7 +704,7 @@ function buildPop(d){
         'style="width:100%;height:105px;object-fit:cover;border-radius:6px;cursor:pointer;display:block" '+
         'onclick="openPV(\''+photoMeter+'\',\'kWh Meter – No. '+d[5]+'\')">'+
       '<div style="position:absolute;bottom:4px;left:5px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px">'+
-        'klik untuk perbesar'+
+        '📊 kWh Meter — klik perbesar'+
       '</div>'+
       (d[5]?'<div style="position:absolute;top:4px;left:5px;background:rgba(15,35,64,.8);color:#f5a623;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px">'+
         'Meter: '+d[5]+
@@ -712,19 +712,19 @@ function buildPop(d){
     '</div>'+
     // ── Info rows ──
     '<div style="margin-top:7px">'+
-      '<div class="pp-row"><span class="pp-lbl">Daya</span><span class="pp-val" style="font-weight:800">'+parseInt(d[3]).toLocaleString('id-ID')+' W</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">Gardu</span><span class="pp-val">'+(d[4]||'—')+'</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">Meter</span><span class="pp-val" style="font-size:10px;font-variant-numeric:tabular-nums">'+(d[5]||'—')+'</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">Merk</span><span class="pp-val">'+(d[6]||'—')+'</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">Thn Buat</span><span class="pp-val">'+(d[9]||'—')+'</span></div>'+
+      '<div class="pp-row"><span class="pp-lbl">⚡ Daya</span><span class="pp-val" style="font-weight:800">'+parseInt(d[3]).toLocaleString('id-ID')+' W</span></div>'+
+      '<div class="pp-row"><span class="pp-lbl">🏗️ Gardu</span><span class="pp-val">'+(d[4]||'—')+'</span></div>'+
+      '<div class="pp-row"><span class="pp-lbl">📊 Meter</span><span class="pp-val" style="font-size:10px;font-variant-numeric:tabular-nums">'+(d[5]||'—')+'</span></div>'+
+      '<div class="pp-row"><span class="pp-lbl">🏷️ Merk</span><span class="pp-val">'+(d[6]||'—')+'</span></div>'+
+      '<div class="pp-row"><span class="pp-lbl">📅 Thn Buat</span><span class="pp-val">'+(d[9]||'—')+'</span></div>'+
     '</div>'+
     // ── kWh bar ──
     '<div style="background:#f8fafc;border-radius:6px;padding:7px 8px;margin:6px 0;border:1px solid #e2e8f0">'+
       '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:4px">'+
-        '<span style="color:#64748b">kWh Estimasi</span><span>'+d[11]+' / hari</span>'+
+        '<span style="color:#64748b">📐 kWh Estimasi</span><span>'+d[11]+' / hari</span>'+
       '</div>'+
       '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:5px">'+
-        '<span style="color:#64748b">kWh Aktual</span>'+
+        '<span style="color:#64748b">⚡ kWh Aktual</span>'+
         '<span style="color:'+kwhColor+'">'+d[12]+' / hari '+(d[12]>d[11]?'&#9650;+'+kwh_diff+'%':d[12]<d[11]?'&#9660;':'—')+'</span>'+
       '</div>'+
       '<div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">'+
@@ -733,8 +733,8 @@ function buildPop(d){
     '</div>'+
     anomali_html+
     '<div class="pp-btns">'+
-      '<button style="background:#dc2626;color:#fff" onclick="map.closePopup();prefillLapor('+d[1]+','+d[2]+')">Lapor Masalah</button>'+
-      '<button style="background:#2563eb;color:#fff" onclick="map.closePopup();openPanel(\'pasang\')">Minta Pasang</button>'+
+      '<button style="background:#dc2626;color:#fff" onclick="map.closePopup();prefillLapor('+d[1]+','+d[2]+')">📸 Lapor Masalah</button>'+
+      '<button style="background:#2563eb;color:#fff" onclick="map.closePopup();openPanel(\'pasang\')">💡 Minta Pasang</button>'+
     '</div>';
   return div;
 }
