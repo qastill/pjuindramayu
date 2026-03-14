@@ -445,6 +445,9 @@ select.fc{cursor:pointer}
       <button class="mf-btn" id="mf-kabel" onclick="toggleCables(this)">
         🔌 Jalur Kabel
       </button>
+      <a href="visualisasi.html" class="mf-btn" style="text-decoration:none;background:var(--gold);color:var(--navy);border-color:var(--gold)">
+        ⚡ Peta Jaringan KWH
+      </a>
     </div>
 
     <!-- Legend -->
@@ -1002,6 +1005,7 @@ function renderHome(el){
       CABLE_LINES.filter(function(c){return c.status==='degraded';}).length+' gardu degradasi.'+
     '</div>'+
     '<button class="btn btn-navy btn-full" onclick="toggleCables(document.getElementById(\'mf-kabel\'));closePanel()">Tampilkan Jalur Kabel di Peta</button>'+
+    '<a href="visualisasi.html" class="btn btn-gold btn-full" style="text-decoration:none;text-align:center;margin-top:6px;display:block">⚡ Buka Peta Visualisasi Jaringan KWH Meter → PJU</a>'+
     '<div class="div"></div>'+
     '<div class="sec-title">Layanan Masyarakat</div>'+
     '<div style="display:flex;flex-direction:column;gap:6px">'+
