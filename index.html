@@ -3,2008 +3,337 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIPJU Indramayu – Peta PJU Interaktif</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;font-family:'Inter',system-ui,sans-serif;color:#1e293b}
-:root{
-  --navy:#0f2340;--navy2:#1a3a5c;--gold:#f5a623;
-  --green:#16a34a;--red:#dc2626;--orange:#ea580c;
-  --blue:#2563eb;--purple:#7c3aed;--yellow:#ca8a04;
-  --gray:#64748b;--border:#e2e8f0;--bg:#f8fafc;
-}
-#app{display:flex;flex-direction:column;height:100vh}
-
-/* ── TOPBAR ── */
-#topbar{
-  height:50px;background:var(--navy);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 14px;flex-shrink:0;z-index:1000;
-  border-bottom:2px solid var(--gold);
-}
-.brand{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none}
-.brand-logo{
-  width:30px;height:30px;background:var(--gold);border-radius:6px;
-  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--navy);
-}
-.brand-text h1{color:#fff;font-size:13px;font-weight:700;line-height:1.2}
-.brand-text p{color:rgba(255,255,255,.45);font-size:10px}
-#topnav{display:flex;gap:2px}
-.tnav-btn{
-  background:none;border:none;color:rgba(255,255,255,.6);
-  padding:5px 11px;border-radius:5px;font-size:11px;font-weight:600;
-  cursor:pointer;font-family:inherit;transition:all .15s;
-}
-.tnav-btn:hover{background:rgba(255,255,255,.08);color:#fff}
-.tnav-btn.active{background:rgba(245,166,35,.18);color:var(--gold)}
-.topbar-right{display:flex;align-items:center;gap:8px}
-.clock{color:rgba(255,255,255,.4);font-size:10px;font-variant-numeric:tabular-nums}
-.btn-login{
-  background:var(--gold);color:var(--navy);border:none;
-  padding:5px 13px;border-radius:5px;font-size:11px;font-weight:700;
-  cursor:pointer;font-family:inherit;
-}
-#user-chip{
-  display:none;align-items:center;gap:6px;
-  background:rgba(255,255,255,.1);border-radius:20px;
-  padding:3px 10px 3px 4px;cursor:pointer;
-}
-#user-chip .av{
-  width:22px;height:22px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:700;color:#fff;
-}
-#user-chip span{font-size:11px;color:rgba(255,255,255,.8);font-weight:600}
-
-/* ── BODY ── */
-#body{flex:1;display:flex;overflow:hidden;position:relative}
-
-/* ── MAP ── */
-#map-wrap{flex:1;position:relative}
-#map{width:100%;height:100%}
-
-/* ── MAP OVERLAYS ── */
-#map-toolbar{
-  position:absolute;top:10px;left:10px;z-index:500;
-  display:flex;gap:5px;flex-wrap:wrap;pointer-events:all;
-}
-.mf-btn{
-  background:rgba(255,255,255,.95);border:1px solid var(--border);
-  color:var(--navy);padding:5px 11px;border-radius:18px;
-  font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;
-  box-shadow:0 2px 6px rgba(0,0,0,.12);transition:all .15s;
-  display:flex;align-items:center;gap:5px;
-}
-.mf-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-.mf-btn.active{background:var(--navy);color:var(--gold);border-color:var(--navy)}
-.mf-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-
-#map-legend{
-  position:absolute;bottom:28px;left:10px;z-index:500;
-  background:rgba(15,35,64,.88);backdrop-filter:blur(6px);
-  border-radius:10px;padding:11px 13px;color:#fff;
-  border:1px solid rgba(255,255,255,.1);min-width:155px;
-}
-#map-legend h4{font-size:11px;font-weight:700;color:var(--gold);margin-bottom:7px}
-.leg-row{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:11px}
-.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.leg-line{width:18px;height:3px;flex-shrink:0;border-radius:2px}
-.leg-count{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;font-size:10px}
-
-#locate-me{
-  position:absolute;top:10px;right:10px;z-index:500;
-  width:34px;height:34px;background:rgba(255,255,255,.95);
-  border:1px solid var(--border);border-radius:7px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:15px;
-  box-shadow:0 2px 6px rgba(0,0,0,.12);
-}
-#locate-me:hover{background:var(--navy);color:#fff}
-
-/* ── SIDE PANEL ── */
-#panel{
-  width:0;overflow:hidden;background:#fff;
-  border-left:1px solid var(--border);
-  transition:width .25s cubic-bezier(.4,0,.2,1);
-  display:flex;flex-direction:column;flex-shrink:0;
-}
-#panel.open{width:370px}
-#panel-hd{
-  padding:12px 14px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;background:var(--bg);min-width:370px;
-}
-#panel-hd h2{font-size:13px;font-weight:700;color:var(--navy)}
-#panel-close{
-  background:none;border:none;color:var(--gray);
-  width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:16px;
-  display:flex;align-items:center;justify-content:center;
-}
-#panel-close:hover{background:var(--border)}
-#panel-body{flex:1;overflow-y:auto;min-width:370px}
-#panel-body::-webkit-scrollbar{width:3px}
-#panel-body::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
-
-/* ── SECTION ── */
-.sec{padding:14px}
-.sec-title{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
-
-/* ── STAT CARDS ── */
-.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-.stat-row.two{grid-template-columns:repeat(2,1fr)}
-.stat-box{
-  background:var(--bg);border-radius:8px;padding:10px 9px;
-  border:1px solid var(--border);text-align:center;
-}
-.stat-box .n{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
-.stat-box .l{font-size:10px;color:var(--gray);margin-top:2px;line-height:1.3}
-
-/* ── TABS ── */
-.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:12px;gap:0;overflow-x:auto}
-.tabs::-webkit-scrollbar{height:0}
-.tab-btn{
-  background:none;border:none;font-family:inherit;font-size:11px;font-weight:600;
-  color:var(--gray);padding:7px 12px;cursor:pointer;white-space:nowrap;
-  border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;
-}
-.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy)}
-.tc{display:none}.tc.active{display:block}
-
-/* ── FORM ── */
-.fg{margin-bottom:11px}
-.fg label{display:block;font-size:11px;font-weight:600;color:var(--navy);margin-bottom:4px}
-.fc{
-  width:100%;padding:8px 10px;border:1.5px solid var(--border);
-  border-radius:6px;font-size:12px;font-family:inherit;color:var(--navy);
-  transition:border-color .15s;background:#fff;
-}
-.fc:focus{outline:none;border-color:var(--gold)}
-textarea.fc{resize:vertical;min-height:75px}
-select.fc{cursor:pointer}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fhint{font-size:10px;color:var(--gray);margin-top:3px}
-
-/* ── BUTTONS ── */
-.btn{
-  padding:7px 14px;border-radius:6px;border:none;cursor:pointer;
-  font-size:11px;font-weight:700;font-family:inherit;
-  display:inline-flex;align-items:center;justify-content:center;gap:5px;
-  transition:opacity .15s,transform .1s;
-}
-.btn:active{transform:scale(.97)}
-.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{opacity:.9}
-.btn-red{background:var(--red);color:#fff}.btn-red:hover{opacity:.9}
-.btn-green{background:var(--green);color:#fff}.btn-green:hover{opacity:.9}
-.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{opacity:.9}
-.btn-outline{background:none;border:1.5px solid var(--border);color:var(--gray)}
-.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
-.btn-full{width:100%}
-.btn-sm{padding:4px 10px;font-size:10px}
-.bgroup{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
-
-/* ── BADGE ── */
-.badge{display:inline-flex;align-items:center;gap:2px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
-.b-green{background:#dcfce7;color:#16a34a}
-.b-red{background:#fee2e2;color:#dc2626}
-.b-orange{background:#ffedd5;color:#ea580c}
-.b-blue{background:#dbeafe;color:#2563eb}
-.b-purple{background:#ede9fe;color:#7c3aed}
-.b-gray{background:#f1f5f9;color:#64748b}
-.b-yellow{background:#fef9c3;color:#ca8a04}
-
-/* ── ALERT ── */
-.alert{padding:8px 11px;border-radius:6px;font-size:11px;line-height:1.5;border-left:3px solid;margin-bottom:10px}
-.al-info{background:#dbeafe;border-color:var(--blue);color:#1e40af}
-.al-warn{background:#fef3c7;border-color:var(--gold);color:#92400e}
-.al-danger{background:#fee2e2;border-color:var(--red);color:#991b1b}
-.al-success{background:#dcfce7;border-color:var(--green);color:#166534}
-
-/* ── CARDS ── */
-.card{
-  padding:11px;border-radius:8px;border:1px solid var(--border);
-  margin-bottom:8px;transition:box-shadow .15s;
-}
-.card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}
-.card h4{font-size:12px;font-weight:700;margin-bottom:3px}
-.card p{font-size:11px;color:var(--gray);line-height:1.5}
-.card .meta{font-size:10px;color:#94a3b8;margin-top:4px}
-.card .cfoot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:5px}
-.card.c-red{border-left:3px solid var(--red)}
-.card.c-orange{border-left:3px solid var(--orange)}
-.card.c-green{border-left:3px solid var(--green)}
-.card.c-purple{border-left:3px solid var(--purple)}
-.card.c-yellow{border-left:3px solid var(--yellow)}
-
-/* ── PROGRESS ── */
-.pbar{height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden;margin-top:4px}
-.pfill{height:100%;border-radius:3px;transition:width 1s ease}
-
-/* ── PHOTO UPLOAD ── */
-.photo-drop{
-  border:2px dashed var(--border);border-radius:7px;padding:18px;
-  text-align:center;cursor:pointer;background:var(--bg);transition:all .2s;
-}
-.photo-drop:hover,.photo-drop.over{border-color:var(--gold);background:#fffbeb}
-.photo-drop p{font-size:11px;color:var(--gray);margin-top:4px}
-.photo-drop span{font-size:10px;color:#94a3b8}
-.photo-previews{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
-.pp-item{position:relative;width:60px;height:60px}
-.pp-item img{width:60px;height:60px;object-fit:cover;border-radius:5px;border:1.5px solid var(--border)}
-.pp-item button{position:absolute;top:-5px;right:-5px;width:15px;height:15px;background:var(--red);color:#fff;border-radius:50%;border:none;cursor:pointer;font-size:8px;display:flex;align-items:center;justify-content:center}
-
-/* ── GPS BTN ── */
-.gps-btn{
-  width:100%;padding:8px;border:1.5px dashed var(--border);border-radius:6px;
-  background:none;cursor:pointer;font-size:11px;color:var(--gray);
-  font-family:inherit;font-weight:600;transition:all .2s;
-  display:flex;align-items:center;justify-content:center;gap:5px;
-}
-.gps-btn:hover{border-color:var(--gold);color:var(--navy);background:#fffbeb}
-
-/* ── ANOMALI SCORE ── */
-.risk-bar{display:flex;align-items:center;gap:7px;margin-top:6px}
-.risk-bar .label{font-size:10px;font-weight:700;min-width:65px}
-.risk-bar .bar{flex:1;height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden}
-.risk-bar .fill{height:100%;border-radius:3px}
-
-/* ── FORUM ── */
-.forum-post{padding:11px;border-radius:8px;border:1px solid var(--border);margin-bottom:8px}
-.fp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:5px}
-.fp-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
-.fp-user{display:flex;align-items:center;gap:7px}
-.fp-name{font-size:12px;font-weight:700}
-.fp-time{font-size:10px;color:var(--gray)}
-.fp-body{font-size:11px;line-height:1.6;color:#374151;margin-bottom:8px}
-.fp-actions{display:flex;gap:6px}
-.fa-btn{background:none;border:none;color:var(--gray);font-size:11px;cursor:pointer;padding:3px 6px;border-radius:5px;font-family:inherit;display:flex;align-items:center;gap:3px;transition:all .15s}
-.fa-btn:hover{background:var(--bg);color:var(--navy)}
-
-/* ── PHOTO VIEWER ── */
-#pv{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:9000;align-items:center;justify-content:center}
-#pv.open{display:flex}
-#pv img{max-width:90vw;max-height:88vh;object-fit:contain;border-radius:6px}
-#pv-close{position:absolute;top:14px;right:18px;background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#pv-cap{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);color:#fff;font-size:11px;background:rgba(0,0,0,.5);padding:4px 13px;border-radius:20px;white-space:nowrap}
-
-/* ── LOGIN ── */
-#login-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:8000;align-items:center;justify-content:center;padding:20px}
-#login-bg.open{display:flex}
-.login-box{background:#fff;border-radius:14px;width:100%;max-width:360px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.2)}
-.login-hd{background:var(--navy);padding:22px 18px;text-align:center}
-.login-hd .ring{width:52px;height:52px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:22px;font-weight:800;color:var(--navy)}
-.login-hd h2{color:#fff;font-size:16px;font-weight:800;margin-top:9px}
-.login-hd p{color:rgba(255,255,255,.5);font-size:11px;margin-top:2px}
-.login-bd{padding:18px}
-.login-tabs{display:flex;background:var(--bg);border-radius:7px;padding:3px;margin-bottom:14px;gap:3px}
-.lt{flex:1;padding:6px;border:none;background:none;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--gray);transition:all .2s}
-.lt.active{background:#fff;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.login-ft{padding:12px 18px;border-top:1px solid var(--border);text-align:center;font-size:11px;color:var(--gray)}
-.login-ft a{cursor:pointer;color:var(--blue)}
-#login-x{position:absolute;top:10px;right:12px;background:rgba(255,255,255,.12);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
-.login-hd{position:relative}
-
-/* ── POPUP ── */
-.pju-pop{font-family:'Inter',sans-serif;font-size:12px;min-width:220px}
-.pp-hd{margin:-14px -20px 10px;padding:10px 13px;color:#fff;border-radius:4px 4px 0 0}
-.pp-hd .pid{font-size:9px;opacity:.7}
-.pp-hd .pulp{font-weight:700;font-size:12px;margin-top:1px}
-.pp-row{display:flex;gap:5px;margin-bottom:4px;font-size:11px;align-items:flex-start}
-.pp-lbl{min-width:52px;color:var(--gray);flex-shrink:0}
-.pp-val{color:var(--navy);font-weight:500}
-.pp-status{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;margin:5px 0}
-.pp-photo{width:100%;height:100px;object-fit:cover;border-radius:5px;margin:7px 0;cursor:pointer}
-.pp-btns{display:flex;gap:5px}
-.pp-btns button{flex:1;padding:5px;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
-.pp-btns button:hover{opacity:.85}
-
-/* ── ZONE CARD ── */
-.zone-card{padding:11px;border-radius:8px;border:1.5px dashed var(--border);margin-bottom:8px;transition:border-color .2s}
-.zone-card:hover{border-color:var(--orange)}
-.zone-card.high{border-style:solid;border-color:var(--red)}
-.zone-card.med{border-style:solid;border-color:var(--orange)}
-.zone-card h4{font-size:12px;font-weight:700;margin-bottom:3px}
-.zone-card p{font-size:11px;color:var(--gray);line-height:1.5}
-.zone-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
-
-/* ── DARK ZONE CIRCLE on map ── */
-/* handled by Leaflet ── */
-
-/* ── TOAST ── */
-#toast{
-  position:fixed;bottom:18px;right:16px;z-index:5000;
-  background:var(--navy);color:#fff;border-radius:8px;
-  padding:9px 14px;font-size:11px;font-weight:600;
-  box-shadow:0 4px 20px rgba(0,0,0,.25);border-left:3px solid var(--gold);
-  transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none;max-width:280px;
-}
-#toast.show{transform:translateY(0);opacity:1}
-
-/* ── ULP BAR ── */
-.ulp-item{margin-bottom:9px}
-.ulp-hd{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
-.ulp-hd .nm{font-weight:600}
-
-/* ── DIVIDER ── */
-.div{height:1px;background:var(--border);margin:11px 0}
-
-/* ── HERO IMG ── */
-.hero{width:100%;height:110px;object-fit:cover;border-radius:7px;margin-bottom:11px}
-
-/* ── BILLING HERO CARD ── */
-.billing-hero{
-  background:linear-gradient(135deg,#0f2340 0%,#1a4a7a 100%);
-  border-radius:10px;padding:16px;color:#fff;margin-bottom:12px;
-  position:relative;overflow:hidden;border:1px solid rgba(245,166,35,.2);
-}
-.billing-hero::before{content:'';position:absolute;top:-40%;right:-15%;width:180px;height:180px;border-radius:50%;background:rgba(245,166,35,.08)}
-.billing-hero .bh-title{font-size:10px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
-.billing-hero .bh-amount{font-size:26px;font-weight:800;color:var(--gold);line-height:1}
-.billing-hero .bh-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:5px}
-.billing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
-.billing-item{background:rgba(255,255,255,.08);border-radius:7px;padding:8px;text-align:center}
-.billing-item .bv{font-size:14px;font-weight:800;color:#fff}
-.billing-item .bl{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px}
-
-/* ── TAGGING UPLOAD ── */
-.upload-zone{
-  border:2px dashed var(--border);border-radius:8px;padding:22px;
-  text-align:center;cursor:pointer;background:var(--bg);transition:all .25s;
-  position:relative;overflow:hidden;
-}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:#fffbeb}
-.upload-zone.has-photo{border-style:solid;border-color:var(--green);padding:6px}
-.upload-zone .uz-icon{font-size:32px;margin-bottom:5px}
-.upload-zone .uz-text{font-size:11px;color:var(--gray)}
-.upload-zone .uz-hint{font-size:10px;color:#94a3b8;margin-top:3px}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
-.upload-zone img{max-width:100%;max-height:200px;border-radius:6px;object-fit:cover}
-.tag-result{background:#dcfce7;border:1.5px solid #86efac;border-radius:8px;padding:11px;margin-top:10px}
-.tag-result h4{font-size:12px;font-weight:700;color:#166534;margin-bottom:5px}
-.tag-result p{font-size:11px;color:#15803d}
-
-/* ── METER INFO BOX ── */
-.meter-info-box{
-  background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;
-  padding:10px;margin:8px 0;display:none;
-}
-.meter-info-box.show{display:block}
-.mi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
-.mi-item{text-align:center}
-.mi-item .mv{font-weight:800;font-size:15px;color:var(--navy)}
-.mi-item .ml{font-size:9px;color:var(--gray)}
-
-/* ── GARDU POPUP ENHANCED ── */
-.gardu-pop{font-family:'Inter',sans-serif;min-width:260px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:640px){
-  #panel.open{width:100vw}
-  #topnav{display:none}
-  .clock{display:none}
-}
-</style>
+<title>SIPJU Indramayu - Sistem Informasi Penerangan Jalan Umum</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<div id="app">
-
-<!-- TOPBAR -->
-<div id="topbar">
-  <div class="brand" onclick="openPanel('home')">
-    <div class="brand-logo">PJU</div>
-    <div class="brand-text">
-      <h1>SIPJU Indramayu</h1>
-      <p>Sistem Informasi Penerangan Jalan Umum</p>
-    </div>
-  </div>
-  <div id="topnav">
-    <button class="tnav-btn active" id="nb-home" onclick="openPanel('home')">📊 Statistik</button>
-    <button class="tnav-btn" id="nb-lapor" onclick="openPanel('lapor')">📸 Lapor PJU</button>
-    <button class="tnav-btn" id="nb-tiket" onclick="openPanel('tiket')">🎫 Cek Tiket</button>
-    <button class="tnav-btn" id="nb-pasang" onclick="openPanel('pasang')">💡 Minta Pasang</button>
-    <button class="tnav-btn" id="nb-forum" onclick="openPanel('forum')">💬 Forum Warga</button>
-    <button class="tnav-btn" id="nb-tagpju" onclick="openPanel('tagpju')" style="display:none">📸 Tag PJU</button>
-    <button class="tnav-btn" id="nb-tagmeter" onclick="openPanel('tagmeter')" style="display:none">⚡ Tag Meter</button>
-  </div>
-  <div class="topbar-right">
-    <span class="clock" id="clock"></span>
-    <button class="btn-login" id="btn-login" onclick="openLogin()">Login Admin</button>
-    <div id="user-chip" onclick="openPanel('admin')">
-      <div class="av" id="uc-av" style="background:var(--gold)"></div>
-      <span id="uc-name"></span>
-    </div>
-  </div>
-</div>
-
-<!-- BODY -->
-<div id="body">
-
-  <!-- MAP -->
-  <div id="map-wrap">
-    <div id="map"></div>
-
-    <!-- Toolbar -->
-    <div id="map-toolbar">
-      <button class="mf-btn active" id="mf-all" onclick="mapFilter('all',this)">
-        🗺️ Semua PJU
-      </button>
-      <button class="mf-btn" id="mf-normal" onclick="mapFilter('normal',this)">
-        💡 Normal
-      </button>
-      <button class="mf-btn" id="mf-mati" onclick="mapFilter('mati',this)">
-        🔴 Mati
-      </button>
-      <button class="mf-btn" id="mf-anomali" onclick="mapFilter('anomali',this)">
-        ⚠️ Anomali
-      </button>
-      <button class="mf-btn" id="mf-gelap" onclick="toggleDarkZones(this)">
-        🌑 Zona Gelap
-      </button>
-      <button class="mf-btn" id="mf-kabel" onclick="toggleCables(this)">
-        🔌 Jalur Kabel
-      </button>
-      <a href="visualisasi.html" class="mf-btn" style="text-decoration:none;background:var(--gold);color:var(--navy);border-color:var(--gold)">
-        ⚡ Peta Jaringan KWH
-      </a>
-    </div>
-
-    <!-- Legend -->
-    <div id="map-legend">
-      <h4>Legenda</h4>
-      <div class="leg-row">💡 <span style="color:#16a34a;font-weight:700">Normal</span><span class="leg-count" id="lc-normal" style="color:#16a34a"></span></div>
-      <div class="leg-row">🔴 <span style="color:#dc2626;font-weight:700">Mati</span><span class="leg-count" id="lc-mati" style="color:#dc2626"></span></div>
-      <div class="leg-row">🟡 <span style="color:#f97316;font-weight:700">Berkedip</span><span class="leg-count" id="lc-berkedip" style="color:#f97316"></span></div>
-      <div class="leg-row">⚠️ <span style="color:#7c3aed;font-weight:700">Anomali</span><span class="leg-count" id="lc-anomali" style="color:#7c3aed"></span></div>
-      <div class="leg-row">🔲 <span style="color:#64748b;font-weight:700">Bongkar</span><span class="leg-count" id="lc-bongkar" style="color:#64748b"></span></div>
-      <div style="border-top:1px solid rgba(255,255,255,.1);margin:6px 0 4px"></div>
-      <div class="leg-row">🔌 <span>Jalur kabel aktif</span></div>
-      <div class="leg-row">⚡ <span>Jalur kabel anomali</span></div>
-      <div class="leg-row">🌑 <span>Zona gelap / tanpa PJU</span></div>
-      <div style="margin-top:5px;font-size:9px;color:rgba(255,255,255,.35)">⚠️ Anomali = indikasi pencurian listrik</div>
-    </div>
-
-    <button id="locate-me" onclick="locateUser()" title="Lokasi saya">&#8982;</button>
-  </div>
-
-  <!-- SIDE PANEL -->
-  <div id="panel">
-    <div id="panel-hd">
-      <h2 id="panel-title">Statistik PJU</h2>
-      <button id="panel-close" onclick="closePanel()">&#10005;</button>
-    </div>
-    <div id="panel-body"></div>
-  </div>
-</div><!-- /body -->
-</div><!-- /app -->
-
-<!-- PHOTO VIEWER -->
-<div id="pv">
-  <button id="pv-close" onclick="closePV()">&#10005;</button>
-  <img id="pv-img" src="" alt="">
-  <div id="pv-cap"></div>
-</div>
-
-<!-- TOAST -->
-<div id="toast"></div>
-
-<!-- LOGIN MODAL -->
-<div id="login-bg">
-  <div class="login-box">
-    <div class="login-hd">
-      <button id="login-x" onclick="closeLogin()">&#10005;</button>
-      <div class="ring">PJU</div>
-      <h2>Portal Admin SIPJU</h2>
-      <p>Khusus PLN &amp; Dinas PUPR Indramayu</p>
-    </div>
-    <div class="login-bd">
-      <div class="login-tabs">
-        <button class="lt active" onclick="setRole('pln',this)">PLN</button>
-        <button class="lt" onclick="setRole('pupr',this)">Dinas PUPR</button>
-      </div>
-      <div class="fg"><label>Username</label><input type="text" class="fc" id="lu" placeholder="Username"></div>
-      <div class="fg"><label>Password</label><input type="password" class="fc" id="lp" placeholder="Password"></div>
-      <div class="alert al-info" id="linfo">Demo: <strong>admin</strong> / <strong>sipju2025</strong></div>
-      <button class="btn btn-navy btn-full" onclick="doLogin()">Masuk</button>
-    </div>
-    <div class="login-ft"><a onclick="closeLogin()">Tutup &mdash; akses publik tidak perlu login</a></div>
-  </div>
-</div>
-
-<!-- DATA SCRIPTS -->
-<script src="pju_data.js"></script>
-<script src="cable_lines.js"></script>
-<script src="dark_zones.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<div id="app-loading" style="position:fixed;inset:0;background:#1a3c5e;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;font-family:Segoe UI,sans-serif"><div style="text-align:center"><div style="font-size:48px;margin-bottom:12px">💡</div><div style="font-size:18px;font-weight:800">SIPJU Indramayu</div><div style="font-size:12px;opacity:.6;margin-top:4px">Memuat data...</div></div></div>
+<script src="meter_data.js"></script>
 <script>
-// ================================================================
-// PJU_DATA format:
-// [id,lat,lng,daya,gardu,meter,merk,ulp,tiang,tahun,status,
-//  kwh_est,kwh_act,anomali_score,anomali_flags]
-// CABLE_LINES: [{gardu,center,status,n_pju,points,pju_ids}]
-// DARK_ZONES: [{id,nama,kec,lat,lng,radius_m,prioritas,warga,est_titik,alasan}]
-// ================================================================
+document.addEventListener('DOMContentLoaded',function(){
+// Remove loading
+setTimeout(function(){var ld=document.getElementById('app-loading');if(ld)ld.remove()},500);
 
-// ── Color maps ──
-var STATUS_COLOR = {
-  normal:'#16a34a', mati:'#dc2626', berkedip:'#f97316',
-  anomali:'#7c3aed', bongkar:'#64748b'
-};
-var ULP_COLOR = {
-  'ULP Indramayu':'#2563eb','ULP Jatibarang':'#16a34a',
-  'ULP Haurgeulis':'#f97316','ULP Kandanghaur':'#a855f7'
-};
-var CABLE_COLOR = {normal:'#f5a623',anomali:'#7c3aed',degraded:'#dc2626'};
+// ===== STATS =====
+var S={totalPJU:0,aktif:0,mati:0,totalDaya:0,totalKwh:0,totalKwhEst:0,anomali:0,ulp:{}};
+METER_DATA.forEach(function(m){
+  S.totalPJU+=m.jmlPJU;S.totalDaya+=m.totalDaya;S.totalKwh+=m.kwhPerDay;S.totalKwhEst+=m.kwhEst;
+  if(m.status==='anomali')S.anomali++;
+  m.pjuList.forEach(function(p){if(p.status==='aktif')S.aktif++;else S.mati++});
+  S.ulp[m.ulp]=(S.ulp[m.ulp]||0)+m.jmlPJU;
+});
+S.totalKwh=Math.round(S.totalKwh);S.totalKwhEst=Math.round(S.totalKwhEst);
 
-// ── Photos: PJU fisik (tiang lampu jalan) ──
-var PHOTOS_PJU = [
-  'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1531492898902-e2e2d0d57de1?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1542621334-a254cf47733d?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1548092372-0d1bd40894a3?w=320&h=200&fit=crop',
-];
-// ── Photos: kWh Meter PLN ──
-var PHOTOS_METER = [
-  'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1558449028-b53a39d100fc?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=320&h=200&fit=crop',
-  'https://images.unsplash.com/photo-1548946526-f69e2424cf45?w=320&h=200&fit=crop',
-];
-// Keep PHOTOS as alias for backward compat
-var PHOTOS = PHOTOS_PJU;
+// ===== BUILD HTML =====
+document.body.insertAdjacentHTML('afterbegin', buildApp(S));
 
-// ── State ──
-var map, clusterLayer, cableLayer, zoneLayer, reportLayer;
-var showCables=false, showZones=false;
-var isLoggedIn=false, loggedUser=null, loginRole='pln';
-var likedPosts={};
-var userReports=[
-  {id:'LAP-0047',lat:-6.3318,lng:108.3243,lokasi:'Jl. Jend. Sudirman No.23, Indramayu',masalah:'Lampu mati total',desc:'PJU sudah mati 6 hari, sangat gelap malam hari.',pelapor:'Budi Santoso',waktu:'08 Jun 2025 20:30',status:'baru',photo:PHOTOS[0]},
-  {id:'LAP-0046',lat:-6.3412,lng:108.3089,lokasi:'Jl. Raya Sindang KM 2',masalah:'3 lampu mati berturut',desc:'Tiga PJU berturut-turut mati, jalan sangat gelap.',pelapor:'Sri Wahyuni',waktu:'09 Jun 2025 19:15',status:'baru',photo:PHOTOS[1]},
-  {id:'LAP-0041',lat:-6.4721,lng:108.2934,lokasi:'Jl. Ahmad Yani No.55, Jatibarang',masalah:'Kap lampu pecah kena petir',desc:'Kap PJU pecah, tiang masih aman.',pelapor:'Hendra Wijaya',waktu:'07 Jun 2025 08:20',status:'proses',photo:PHOTOS[2]},
-  {id:'LAP-0038',lat:-6.3280,lng:108.3310,lokasi:'Jl. Pahlawan No.10, Indramayu',masalah:'Kabel putus',desc:'Kabel putus kena angin kencang. Sudah diperbaiki.',pelapor:'Dewi Lestari',waktu:'05 Jun 2025 14:00',status:'selesai',photo:PHOTOS[3]},
-];
+// ===== INIT =====
+initDash(S);initCharts(S);initMap();initGarduSel();initTables(S);initIlegal();
+updateClock();setInterval(updateClock,1000);
+});
 
-// ── Compute stats from data ──
-var STATS = (function(){
-  var counts={normal:0,mati:0,berkedip:0,anomali:0,bongkar:0};
-  var ulp={};
-  var kwh_total=0, kwh_act_total=0;
-  PJU_DATA.forEach(function(d){
-    var st=d[10]||'normal';
-    counts[st]=(counts[st]||0)+1;
-    ulp[d[7]]=(ulp[d[7]]||0)+1;
-    kwh_total+=d[11]||0;
-    kwh_act_total+=d[12]||0;
-  });
-  return {counts,ulp,kwh_total:kwh_total.toFixed(1),kwh_act_total:kwh_act_total.toFixed(1),total:PJU_DATA.length};
-})();
+function buildApp(S){
+  return '<style>'+getCSS()+'</style>'+
+  // TOPBAR
+  '<header class="topbar"><div class="logo"><button class="hamburger" onclick="document.getElementById(\'sidebar\').classList.toggle(\'open\')"><i class="fas fa-bars"></i></button><div class="icon-lamp">💡</div><div><div style="font-size:14px;font-weight:800">SIPJU Indramayu</div><div style="font-size:10px;opacity:.6">Sistem Informasi PJU Kab. Indramayu</div></div></div><div class="top-right"><div class="clock"><i class="fas fa-circle" style="color:#2ecc71;font-size:7px"></i> <span id="clock"></span></div><div style="display:flex;align-items:center;gap:8px"><div class="avatar">AD</div><div><div style="font-size:12px;font-weight:600">Admin PJU</div><div style="font-size:10px;opacity:.6">Administrator</div></div></div></div></header>'+
+  // SIDEBAR
+  '<nav class="sidebar" id="sidebar"><div class="sidebar-menu">'+
+    '<div class="st">MENU UTAMA</div>'+
+    '<div class="si active" onclick="sp(\'dashboard\')"><span class="ic">📊</span> Dashboard Utama</div>'+
+    '<div class="si" onclick="sp(\'peta\')"><span class="ic">🗺️</span> Peta & Visualisasi</div>'+
+    '<div class="st">PENDATAAN</div>'+
+    '<div class="si" onclick="sp(\'tagpju\')"><span class="ic">📸</span> Upload & Tagging PJU</div>'+
+    '<div class="si" onclick="sp(\'tagmeter\')"><span class="ic">⚡</span> Upload & Tagging Meter</div>'+
+    '<div class="si" onclick="sp(\'datapju\')"><span class="ic">💡</span> Data Titik PJU <span class="badge green">'+S.totalPJU.toLocaleString('id-ID')+'</span></div>'+
+    '<div class="si" onclick="sp(\'datameter\')"><span class="ic">🔌</span> Data KWH Meter</div>'+
+    '<div class="st">MONITORING</div>'+
+    '<div class="si" onclick="sp(\'ilegal\')"><span class="ic">⚠️</span> Prediksi PJU Ilegal <span class="badge">'+S.anomali+'</span></div>'+
+    '<div class="st">SISTEM</div>'+
+    '<div class="si"><span class="ic">⚙️</span> Pengaturan</div>'+
+    '<div style="padding:16px;margin-top:10px;border-top:1px solid #333"><div style="font-size:10px;color:#666">v3.1 | © 2025 Pemkab Indramayu</div></div>'+
+  '</div></nav>'+
+  // MAIN
+  '<main class="main">'+buildPages(S)+'</main>'+
+  // MODAL
+  '<div class="modal-bg" id="modal" onclick="if(event.target===this)this.style.display=\'none\'"><div class="modal"><div style="font-size:48px;margin-bottom:10px">✅</div><p id="modalMsg" style="font-size:13px;color:#555"></p><button class="btn btn-primary" style="margin-top:12px" onclick="document.getElementById(\'modal\').style.display=\'none\'">OK</button></div></div>';
+}
 
-// Update legend counts
-document.getElementById('lc-normal').textContent = STATS.counts.normal||0;
-document.getElementById('lc-mati').textContent = STATS.counts.mati||0;
-document.getElementById('lc-berkedip').textContent = STATS.counts.berkedip||0;
-document.getElementById('lc-anomali').textContent = STATS.counts.anomali||0;
-document.getElementById('lc-bongkar').textContent = STATS.counts.bongkar||0;
+function buildPages(S){
+  var now=new Date(),start=new Date(2025,0,1),days=Math.floor((now-start)/864e5);
+  var totalKwh=S.totalKwh*days,totalBill=totalKwh*1497;
+  var anomPct=S.totalKwhEst>0?Math.round((S.totalKwh-S.totalKwhEst)/S.totalKwhEst*100):0;
 
-// ================================================================
-// MAP INIT
-// ================================================================
+  return ''+
+  // DASHBOARD
+  '<div class="pg active" id="pg-dashboard">'+
+    '<div class="ph"><h2><span class="phi">📊</span> Dashboard Utama</h2></div>'+
+    '<div class="billing"><div class="bp">✅ Lunas s.d. Mei 2025</div>'+
+      '<div class="bt">💰 Estimasi Tagihan Listrik PJU (1 Jan 2025 - Hari Ini)</div>'+
+      '<div class="ba">Rp '+Math.round(totalBill).toLocaleString('id-ID')+'</div>'+
+      '<div class="bs">Periode: 1 Januari 2025 - '+now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})+' ('+days+' hari)</div>'+
+      '<div class="bg">'+
+        '<div class="bi"><div class="bv">'+Math.round(totalKwh).toLocaleString('id-ID')+' kWh</div><div class="bl">Total Konsumsi kWh</div></div>'+
+        '<div class="bi"><div class="bv">'+METER_DATA.length+' meter</div><div class="bl">Total Meter Aktif</div></div>'+
+        '<div class="bi"><div class="bv">'+S.aktif.toLocaleString('id-ID')+' titik</div><div class="bl">Total PJU Aktif</div></div>'+
+        '<div class="bi"><div class="bv">'+S.totalKwh.toLocaleString('id-ID')+' kWh</div><div class="bl">Rata-rata/Hari</div></div>'+
+        '<div class="bi"><div class="bv">Rp 1.497</div><div class="bl">Tarif PLN/kWh</div></div>'+
+        '<div class="bi"><div class="bv" style="color:#ff8a8a">+'+anomPct+'%</div><div class="bl">Anomali Konsumsi</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="sg" id="dash-stats"></div>'+
+    '<div class="g2"><div class="card"><div class="ch"><h3><i class="fas fa-chart-bar"></i> PJU per ULP</h3></div><div class="cb"><div class="cc"><canvas id="chartULP"></canvas></div></div></div>'+
+    '<div class="card"><div class="ch"><h3><i class="fas fa-chart-line"></i> Tren Konsumsi kWh & Tagihan</h3></div><div class="cb"><div class="cc"><canvas id="chartTrend"></canvas></div></div></div></div>'+
+    '<div class="g2"><div class="card"><div class="ch"><h3><i class="fas fa-chart-pie"></i> Status PJU</h3></div><div class="cb"><div class="cc"><canvas id="chartStatus"></canvas></div></div></div>'+
+    '<div class="card"><div class="ch"><h3><i class="fas fa-history"></i> Aktivitas Terbaru</h3></div><div class="cb"><div style="font-size:12px;line-height:2.2">📸 <strong>Foto PJU Diupload</strong> — 10 menit lalu<br>✅ <strong>Meter Baru Di-tag</strong> — 1 jam lalu<br>⚠️ <strong>Anomali Terdeteksi</strong> — MTR-POMI +65%<br>🔴 <strong>PJU Mati Dilaporkan</strong> — Jl. Raya Sindang</div></div></div></div>'+
+  '</div>'+
+  // PETA
+  '<div class="pg" id="pg-peta">'+
+    '<div class="ph"><h2><span class="phi">🗺️</span> Peta & Visualisasi Jaringan PJU</h2></div>'+
+    '<div class="alert">ℹ️ Klik <b>KWH Meter (⚡)</b> untuk detail jumlah lampu, daya, tagihan, indikasi ilegal. Garis kabel menghubungkan meter ke PJU.</div>'+
+    '<div class="legend"><b>Legenda:</b> 🟠 KWH Meter &nbsp; 🟢 PJU Aktif &nbsp; 🔴 PJU Mati &nbsp; <span style="color:#3498db">━━</span> Kabel &nbsp; 🟣 Anomali</div>'+
+    '<div class="mc"><button class="btn btn-primary btn-sm" onclick="fM(\'all\')">🗺️ Semua</button><button class="btn btn-sm" style="background:#e67e22;color:#fff" onclick="fM(\'meter\')">⚡ Meter</button><button class="btn btn-success btn-sm" onclick="fM(\'aktif\')">✅ Aktif</button><button class="btn btn-danger btn-sm" onclick="fM(\'mati\')">🔴 Mati</button><button class="btn btn-sm" style="background:#9b59b6;color:#fff" onclick="fM(\'ilegal\')">⚠️ Anomali</button><button class="btn btn-info btn-sm" onclick="tC()">🔗 Kabel</button></div>'+
+    '<div id="map-container"></div>'+
+  '</div>'+
+  // TAG PJU
+  '<div class="pg" id="pg-tagpju">'+
+    '<div class="ph"><h2><span class="phi">📸</span> Upload & Tagging PJU</h2></div>'+
+    '<div class="alert">📸 Upload foto PJU, tandai GPS, pilih induk KWH Meter. Data opsional bisa diisi nanti.</div>'+
+    '<div class="g2"><div class="card"><div class="ch"><h3>📸 Upload Foto PJU</h3></div><div class="cb">'+
+      '<div class="fg"><label>Foto PJU *</label><div class="uz" id="uz-pju"><div style="font-size:32px">📷</div><div style="color:#888;font-size:12px">Klik / seret foto PJU</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-pju\')"></div></div>'+
+      '<div class="fg"><label>📍 GPS *</label><div style="display:flex;gap:6px"><input class="fc" id="tp-lat" placeholder="Lat"><input class="fc" id="tp-lng" placeholder="Lng"></div><button class="btn btn-info btn-sm" style="margin-top:5px;width:100%" onclick="gG(\'tp-lat\',\'tp-lng\',this)">📱 Ambil GPS</button></div>'+
+      '<div class="fg"><label>⚡ Induk Gardu *</label><select class="fc" id="tp-gardu" onchange="sGI(this.value)"><option value="">-- Pilih --</option></select></div>'+
+      '<div id="tp-info" class="mib"></div>'+
+      '<hr style="border:none;border-top:1px solid #eee;margin:10px 0"><div style="font-size:10px;color:#888;font-weight:700;margin-bottom:6px">OPSIONAL</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="fg"><label>Jenis</label><select class="fc" id="tp-j"><option>--</option><option>LED</option><option>HPS</option><option>Solar</option></select></div><div class="fg"><label>Daya (W)</label><input class="fc" type="number" id="tp-d" placeholder="900"></div></div>'+
+      '<button class="btn btn-success" style="width:100%;padding:11px;font-size:13px" onclick="sPJU()">📸 Upload & Simpan</button>'+
+    '</div></div>'+
+    '<div><div class="card"><div class="ch"><h3>✅ Tagging Terakhir</h3></div><div class="cb" id="th"><div style="text-align:center;padding:20px;color:#aaa">📷 Belum ada hari ini</div></div></div></div></div>'+
+  '</div>'+
+  // TAG METER
+  '<div class="pg" id="pg-tagmeter">'+
+    '<div class="ph"><h2><span class="phi">⚡</span> Upload & Tagging KWH Meter</h2></div>'+
+    '<div class="g2"><div class="card"><div class="ch"><h3>📸 Upload Foto Meter</h3></div><div class="cb">'+
+      '<div class="fg"><label>Foto Meter *</label><div class="uz" id="uz-meter"><div style="font-size:32px">⚡</div><div style="color:#888;font-size:12px">Foto KWH Meter</div><input type="file" accept="image/*" capture="environment" onchange="pU(this,\'uz-meter\')"></div></div>'+
+      '<div class="fg"><label>📍 GPS *</label><div style="display:flex;gap:6px"><input class="fc" id="tm-lat" placeholder="Lat"><input class="fc" id="tm-lng" placeholder="Lng"></div><button class="btn btn-info btn-sm" style="margin-top:5px;width:100%" onclick="gG(\'tm-lat\',\'tm-lng\',this)">📱 Ambil GPS</button></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div class="fg"><label>Gardu *</label><input class="fc" id="tm-g" placeholder="HPSG"></div><div class="fg"><label>No. PLN</label><input class="fc" id="tm-p" placeholder="541721..."></div></div>'+
+      '<button class="btn btn-warning" style="width:100%;padding:11px;font-size:13px" onclick="sMTR()">⚡ Upload & Simpan</button>'+
+    '</div></div>'+
+    '<div class="card"><div class="ch"><h3>✅ Meter Terakhir</h3></div><div class="cb" id="mh"><div style="text-align:center;padding:20px;color:#aaa">⚡ Belum ada hari ini</div></div></div></div>'+
+  '</div>'+
+  // DATA PJU
+  '<div class="pg" id="pg-datapju"><div class="ph"><h2><span class="phi">💡</span> Data Titik PJU</h2></div>'+
+    '<div class="card"><div class="ch"><h3>Daftar PJU</h3></div><div class="cb"><input class="fc" placeholder="🔍 Cari..." oninput="fT(this.value)" style="margin-bottom:10px;max-width:350px"><div class="tw"><table id="tPJU"><thead><tr><th>ID</th><th>Gardu</th><th>ULP</th><th>Daya</th><th>Jenis</th><th>Tiang</th><th>Koordinat</th><th>Status</th></tr></thead><tbody id="tPB"></tbody></table></div><div style="margin-top:8px;font-size:11px;color:#888" id="tPI"></div></div></div></div>'+
+  // DATA METER
+  '<div class="pg" id="pg-datameter"><div class="ph"><h2><span class="phi">🔌</span> Data KWH Meter</h2></div>'+
+    '<div class="card"><div class="ch"><h3>Daftar Meter</h3></div><div class="cb"><div class="tw"><table><thead><tr><th>ID</th><th>Gardu</th><th>PLN</th><th>ULP</th><th>PJU</th><th>Daya</th><th>kWh/Hari</th><th>Tagihan</th><th>Status</th></tr></thead><tbody id="tMB"></tbody></table></div><div style="margin-top:8px;font-size:11px;color:#888" id="tMI"></div></div></div></div>'+
+  // ILEGAL
+  '<div class="pg" id="pg-ilegal"><div class="ph"><h2><span class="phi">⚠️</span> Prediksi PJU Ilegal</h2></div>'+
+    '<div class="alert">⚠️ Meter dengan konsumsi >20% di atas estimasi terindikasi anomali.</div>'+
+    '<div class="sg" id="iS"></div><div class="card"><div class="ch"><h3>⚠️ Meter Anomali</h3></div><div class="cb" id="iL"></div></div></div>';
+}
+
+function getCSS(){
+  return ':root{--p:#1a3c5e;--s:#f39c12;--a:#27ae60;--d:#e74c3c;--i:#3498db;--dk:#1a1a2e;--sw:250px}'+
+  '*{margin:0;padding:0;box-sizing:border-box}body{font-family:Segoe UI,sans-serif;background:#f0f4f8;color:#333}'+
+  '.topbar{background:linear-gradient(135deg,var(--p),#2c5f8a);color:#fff;padding:0 18px;height:54px;display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:0;right:0;z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.3)}'+
+  '.topbar .logo{display:flex;align-items:center;gap:10px}.icon-lamp{width:36px;height:36px;background:var(--s);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px}'+
+  '.top-right{display:flex;align-items:center;gap:14px}.clock{font-size:11px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:5px}.avatar{width:32px;height:32px;background:var(--s);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px}'+
+  '.hamburger{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer}'+
+  '.sidebar{position:fixed;top:54px;left:0;width:var(--sw);height:calc(100vh - 54px);background:var(--dk);overflow-y:auto;z-index:900;transition:transform .3s}'+
+  '.sidebar::-webkit-scrollbar{width:3px}.sidebar::-webkit-scrollbar-thumb{background:#444;border-radius:2px}'+
+  '.sidebar-menu{padding:10px 0}'+
+  '.st{color:#777;font-size:9px;font-weight:700;letter-spacing:1.5px;padding:10px 16px 3px;text-transform:uppercase}'+
+  '.si{display:flex;align-items:center;gap:9px;padding:9px 16px;color:#bbb;cursor:pointer;transition:all .15s;font-size:12px;border-left:3px solid transparent}'+
+  '.si:hover{background:rgba(255,255,255,.05);color:#fff}'+
+  '.si.active{background:rgba(243,156,18,.12);color:var(--s);border-left-color:var(--s)}'+
+  '.ic{width:16px;text-align:center;font-size:13px}'+
+  '.badge{margin-left:auto;background:var(--d);color:#fff;border-radius:10px;padding:1px 6px;font-size:9px;font-weight:bold}.badge.green{background:var(--a)}'+
+  '.main{margin-left:var(--sw);margin-top:54px;padding:20px;min-height:calc(100vh - 54px)}'+
+  '.pg{display:none}.pg.active{display:block;animation:fi .3s ease}@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}'+
+  '.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}'+
+  '.ph h2{font-size:19px;color:var(--p);display:flex;align-items:center;gap:8px}'+
+  '.phi{background:var(--p);color:#fff;width:30px;height:30px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:14px}'+
+  '.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}'+
+  '.sc{background:#fff;border-radius:10px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.05);display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .2s}.sc:hover{transform:translateY(-2px)}'+
+  '.sc .si2{width:44px;height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}'+
+  '.sc .n{font-size:22px;font-weight:800;line-height:1}.sc .l{font-size:11px;color:#666;margin-top:2px}'+
+  '.billing{background:linear-gradient(135deg,#1a3c5e,#2c6faa);color:#fff;border-radius:13px;padding:20px;box-shadow:0 5px 20px rgba(26,60,94,.2);margin-bottom:20px;position:relative;overflow:hidden}'+
+  '.billing::before{content:"";position:absolute;top:-40%;right:-12%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.03)}'+
+  '.billing .bp{position:absolute;top:16px;right:16px;background:rgba(39,174,96,.3);padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700}'+
+  '.billing .bt{font-size:11px;opacity:.7}.billing .ba{font-size:30px;font-weight:800;margin:2px 0}.billing .bs{font-size:10px;opacity:.5}'+
+  '.bg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px}'+
+  '.bi{background:rgba(255,255,255,.08);border-radius:7px;padding:8px;text-align:center}.bv{font-size:14px;font-weight:700}.bl{font-size:8px;opacity:.5;margin-top:1px}'+
+  '.card{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.05);overflow:hidden;margin-bottom:16px}'+
+  '.ch{padding:12px 16px;border-bottom:1px solid #eee;background:#fafafa}.ch h3{font-size:13px;color:var(--p);display:flex;align-items:center;gap:6px}.cb{padding:16px}'+
+  '.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(370px,1fr));gap:16px}'+
+  '.btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:all .15s}'+
+  '.btn-primary{background:var(--p);color:#fff}.btn-success{background:var(--a);color:#fff}.btn-danger{background:var(--d);color:#fff}.btn-warning{background:var(--s);color:#fff}.btn-info{background:var(--i);color:#fff}.btn-sm{padding:5px 10px;font-size:10px}'+
+  '.alert{padding:10px 14px;border-radius:7px;margin-bottom:12px;font-size:12px;background:rgba(52,152,219,.08);border-left:3px solid var(--i);color:#1a4c7c;line-height:1.5}'+
+  '.legend{background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:11px;border:1px solid #eee;color:#555}'+
+  '.mc{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}'+
+  '#map-container{height:calc(100vh - 270px);min-height:400px;border-radius:10px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)}'+
+  '.fg{margin-bottom:10px}.fg label{display:block;font-size:11px;font-weight:600;margin-bottom:4px;color:#555}'+
+  '.fc{width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:6px;font-size:12px;font-family:inherit;transition:border-color .15s}.fc:focus{outline:none;border-color:var(--p)}'+
+  '.uz{border:2px dashed #ccc;border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;position:relative;transition:all .2s}'+
+  '.uz:hover{border-color:var(--p);background:rgba(26,60,94,.02)}.uz.hp{border-style:solid;border-color:var(--a);padding:6px}'+
+  '.uz img{max-width:100%;max-height:180px;border-radius:6px;object-fit:cover}.uz input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}'+
+  '.mib{background:#eff6ff;border:1px solid #bee3f8;border-radius:7px;padding:9px;margin:6px 0;display:none;font-size:11px}.mib.show{display:block}'+
+  '.cc{position:relative;height:260px}'+
+  '.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:11px}'+
+  'table th{background:var(--p);color:#fff;padding:9px 10px;text-align:left;font-size:10px;text-transform:uppercase}'+
+  'table td{padding:8px 10px;border-bottom:1px solid #eee}table tr:hover{background:#f8f9fa}'+
+  '.sb{padding:3px 7px;border-radius:12px;font-size:9px;font-weight:600;display:inline-block}'+
+  '.sb-g{background:rgba(39,174,96,.1);color:var(--a)}.sb-r{background:rgba(231,76,60,.1);color:var(--d)}.sb-p{background:rgba(155,89,182,.1);color:#9b59b6}'+
+  '.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;align-items:center;justify-content:center}'+
+  '.modal{background:#fff;border-radius:12px;padding:24px;text-align:center;max-width:380px;width:90%;box-shadow:0 8px 30px rgba(0,0,0,.2)}'+
+  '@media(max-width:768px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:12px}.g2{grid-template-columns:1fr}.sg{grid-template-columns:repeat(2,1fr)}.hamburger{display:block}.billing .ba{font-size:22px}}'+
+  '::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#bbb;border-radius:2px}';
+}
+
+// ===== NAV =====
+function sp(id){
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.si').forEach(function(s){s.classList.remove('active')});
+  var pg=document.getElementById('pg-'+id);if(pg)pg.classList.add('active');
+  document.querySelectorAll('.si').forEach(function(s){if(s.getAttribute('onclick')&&s.getAttribute('onclick').indexOf("'"+id+"'")>-1)s.classList.add('active')});
+  if(id==='peta'&&map)setTimeout(function(){map.invalidateSize()},100);
+  if(window.innerWidth<=768)document.getElementById('sidebar').classList.remove('open');
+}
+window.sp=sp;
+
+// ===== DASHBOARD STATS =====
+function initDash(S){
+  document.getElementById('dash-stats').innerHTML=
+    sc('📊',S.totalPJU,'Total PJU','--i','datapju')+sc('✅',S.aktif,'PJU Aktif','--a')+sc('❌',S.mati,'PJU Mati','--d')+
+    sc('⚡',METER_DATA.length,'KWH Meter','#9b59b6','datameter')+sc('⚠️',S.anomali,'Indikasi Ilegal','#9b59b6','ilegal');
+  function sc(i,n,l,c,pg){
+    return '<div class="sc"'+(pg?' onclick="sp(\''+pg+'\')"':'')+'><div class="si2" style="background:rgba('+hexToRgb(c)+',.1);color:'+c+'">'+i+'</div><div><div class="n" style="color:'+c+'">'+n.toLocaleString('id-ID')+'</div><div class="l">'+l+'</div></div></div>';
+  }
+}
+function hexToRgb(c){if(c.startsWith('--')){var m={'--i':'52,152,219','--a':'39,174,96','--d':'231,76,60'};return m[c]||'100,100,100'}if(c==='#9b59b6')return '155,89,182';return '100,100,100'}
+
+// ===== CHARTS =====
+function initCharts(S){
+  var ul=Object.keys(S.ulp),ud=Object.values(S.ulp);
+  new Chart(document.getElementById('chartULP'),{type:'bar',data:{labels:ul,datasets:[{label:'PJU',data:ud,backgroundColor:['#3498db','#27ae60','#e67e22','#9b59b6'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:['Aktif','Mati'],datasets:[{data:[S.aktif,S.mati],backgroundColor:['#27ae60','#e74c3c'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom'}}}});
+  new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:['Jan','Feb','Mar','Apr','Mei','Jun'],datasets:[{label:'kWh(rb)',data:[720,695,738,710,745,760],borderColor:'#3498db',fill:true,backgroundColor:'rgba(52,152,219,.08)',tension:.4,yAxisID:'y'},{label:'Tagihan(Jt)',data:[465,450,478,460,483,492],borderColor:'#e74c3c',fill:true,backgroundColor:'rgba(231,76,60,.08)',tension:.4,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{position:'left'},y1:{position:'right',grid:{drawOnChartArea:false}}}}});
+}
+
+// ===== MAP =====
+var map,mL,cL,cV=true,cF='all';
 function initMap(){
-  map = L.map('map',{zoomControl:true,preferCanvas:true,attributionControl:false});
+  map=L.map('map-container').setView([-6.42,108.28],11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-  L.control.attribution({position:'bottomright',prefix:'OSM'}).addTo(map);
-
-  clusterLayer = L.markerClusterGroup({
-    chunkedLoading:true, maxClusterRadius:40, showCoverageOnHover:false,
-    spiderfyOnMaxZoom:true,
-    iconCreateFunction:function(c){
-      var n=c.getChildCount(), sz=n>200?42:n>50?36:30;
-      // Color cluster by dominant status
-      var markers=c.getAllChildMarkers();
-      var hasAnomali=markers.some(function(m){return m.options.pstatus==='anomali';});
-      var hasMati=markers.some(function(m){return m.options.pstatus==='mati';});
-      var bg=hasAnomali?'#7c3aed':hasMati?'#dc2626':'rgba(15,35,64,.88)';
-      var border=hasAnomali?'#c4b5fd':hasMati?'#fca5a5':'#f5a623';
-      return L.divIcon({
-        html:'<div style="width:'+sz+'px;height:'+sz+'px;background:'+bg+';border:2px solid '+border+';border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+(sz>36?11:9)+'px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.3)">'+n+'</div>',
-        className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]
-      });
+  mL=L.layerGroup().addTo(map);cL=L.layerGroup().addTo(map);rM('all');
+}
+function rM(f){
+  mL.clearLayers();cL.clearLayers();
+  METER_DATA.forEach(function(m){
+    var isA=m.status==='anomali',col=isA?'#dc2626':'#e67e22',sz=isA?30:24;
+    var sM=f==='all'||f==='meter'||(f==='ilegal'&&isA);
+    if(sM){
+      var ic=L.divIcon({className:'',html:'<div style="width:'+sz+'px;height:'+sz+'px;background:'+col+';border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;font-size:'+(sz>26?13:11)+'px;color:#fff">⚡</div>',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],popupAnchor:[0,-sz/2]});
+      var mk=L.marker([m.lat,m.lng],{icon:ic,zIndexOffset:1000});
+      var ah=isA?'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:5px;padding:6px;font-size:10px;color:#991b1b;margin:5px 0"><b>🔴 ANOMALI +'+m.anomaliPct+'%</b><br>Est:'+m.kwhEst+' | Aktual:'+m.kwhPerDay+' kWh</div>':'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:5px;padding:4px 6px;font-size:10px;color:#166534;margin:5px 0">✅ Normal</div>';
+      mk.bindPopup('<div style="font-family:Segoe UI,sans-serif;min-width:240px"><div style="background:'+col+';color:#fff;padding:8px 11px;margin:-14px -20px 8px;border-radius:4px 4px 0 0"><b style="font-size:12px">⚡ '+m.id+'</b><div style="font-size:9px;opacity:.8">Gardu:'+m.gardu+' | PLN:'+m.pln+'</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px"><div style="background:#f8fafc;padding:6px;border-radius:5px;text-align:center;border:1px solid #eee"><div style="font-size:15px;font-weight:800;color:#1a3c5e">'+m.jmlPJU+'</div><div style="font-size:8px;color:#888">Jumlah PJU</div></div><div style="background:#f8fafc;padding:6px;border-radius:5px;text-align:center;border:1px solid #eee"><div style="font-size:15px;font-weight:800;color:#1a3c5e">'+(m.totalDaya/1000).toFixed(1)+'kW</div><div style="font-size:8px;color:#888">Total Daya</div></div><div style="background:#f8fafc;padding:6px;border-radius:5px;text-align:center;border:1px solid #eee"><div style="font-size:15px;font-weight:800;color:#3498db">'+m.kwhPerDay+'</div><div style="font-size:8px;color:#888">kWh/Hari</div></div><div style="background:#f8fafc;padding:6px;border-radius:5px;text-align:center;border:1px solid #eee"><div style="font-size:13px;font-weight:800;color:#e67e22">Rp'+(m.tagihanBln/1e6).toFixed(1)+'Jt</div><div style="font-size:8px;color:#888">Tagihan/Bln</div></div></div>'+ah+'<div style="font-size:9px;color:#888">'+m.ulp+' | '+m.lat.toFixed(4)+','+m.lng.toFixed(4)+'</div></div>',{maxWidth:280});
+      mL.addLayer(mk);
     }
-  });
-
-  // Cable layer
-  cableLayer = L.layerGroup();
-  CABLE_LINES.forEach(function(cl){
-    if(cl.points.length<2) return;
-    var color=CABLE_COLOR[cl.status]||'#f5a623';
-    var opacity=cl.status==='anomali'?0.8:0.55;
-    var weight=cl.status==='anomali'?2:1.5;
-    var dash=cl.status==='normal'?'5,4':'3,3';
-    L.polyline(cl.points,{color:color,weight:weight,opacity:opacity,dashArray:dash})
-      .bindTooltip('Gardu: '+cl.gardu+' ('+cl.n_pju+' PJU) — '+cl.status,{sticky:true,direction:'top'})
-      .addTo(cableLayer);
-    // Gardu marker (enhanced with billing & anomaly data)
-    var garduPJUs=PJU_DATA.filter(function(d){return d[4]===cl.gardu;});
-    var garduTotalDaya=garduPJUs.reduce(function(a,d){return a+(d[3]||0);},0);
-    var garduKwhEst=garduPJUs.reduce(function(a,d){return a+(d[11]||0);},0);
-    var garduKwhAct=garduPJUs.reduce(function(a,d){return a+(d[12]||0);},0);
-    var garduAnomalyPct=garduKwhEst>0?((garduKwhAct-garduKwhEst)/garduKwhEst*100).toFixed(1):0;
-    var garduBillPerMonth=Math.round(garduKwhAct*30*1497);
-    var isAnomali=cl.status==='anomali';
-    var garduPhoto=PHOTOS_METER[(parseInt(cl.gardu.replace(/[^0-9]/g,''),10)||0)%PHOTOS_METER.length];
-    
-    var garduPopup=
-      '<div style="font-family:Inter,sans-serif;min-width:260px">'+
-        '<div style="background:'+(isAnomali?'#dc2626':'#e67e22')+';color:#fff;padding:10px 13px;margin:-14px -20px 10px;border-radius:4px 4px 0 0">'+
-          '<div style="font-weight:700;font-size:13px">⚡ Gardu / KWH Meter: '+cl.gardu+'</div>'+
-          '<div style="font-size:10px;opacity:.8">'+cl.n_pju+' titik PJU terhubung'+(isAnomali?' &mdash; ⚠️ ANOMALI':'')+' </div>'+
-        '</div>'+
-        '<img src="'+garduPhoto+'" style="width:100%;height:80px;object-fit:cover;border-radius:5px;margin-bottom:8px;cursor:pointer" onclick="openPV(\''+garduPhoto+'\',\'KWH Meter '+cl.gardu+'\')">'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px">'+
-          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
-            '<div style="font-size:16px;font-weight:800;color:#0f2340">'+cl.n_pju+'</div>'+
-            '<div style="font-size:9px;color:#64748b">Jumlah PJU</div>'+
-          '</div>'+
-          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
-            '<div style="font-size:16px;font-weight:800;color:#0f2340">'+(garduTotalDaya/1000).toFixed(1)+' kW</div>'+
-            '<div style="font-size:9px;color:#64748b">Total Daya</div>'+
-          '</div>'+
-          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
-            '<div style="font-size:16px;font-weight:800;color:#2563eb">'+(garduKwhAct||garduKwhEst).toFixed(1)+'</div>'+
-            '<div style="font-size:9px;color:#64748b">kWh/Hari</div>'+
-          '</div>'+
-          '<div style="background:#f8fafc;border-radius:6px;padding:7px;text-align:center;border:1px solid #e2e8f0">'+
-            '<div style="font-size:14px;font-weight:800;color:#ea580c">Rp '+(garduBillPerMonth>0?(garduBillPerMonth/1000000).toFixed(1)+'Jt':'—')+'</div>'+
-            '<div style="font-size:9px;color:#64748b">Tagihan/Bln</div>'+
-          '</div>'+
-        '</div>'+
-        (isAnomali?
-          '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:8px;font-size:10px;color:#991b1b;margin-bottom:6px">'+
-            '<strong>🔴 ANOMALI TERDETEKSI +'+garduAnomalyPct+'%</strong><br>'+
-            'kWh estimasi: '+garduKwhEst.toFixed(1)+' | Aktual: '+garduKwhAct.toFixed(1)+'<br>'+
-            'Kemungkinan beban tidak terdaftar / pencurian daya'+
-          '</div>':
-          '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 8px;font-size:10px;color:#166534;margin-bottom:6px">'+
-            '✅ Normal &mdash; konsumsi sesuai estimasi'+
-          '</div>'
-        )+
-        '<div style="display:flex;gap:5px">'+
-          '<button onclick="highlightGarduPJU(\''+cl.gardu+'\')" style="flex:1;padding:5px;background:#0f2340;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-weight:700">🔍 Sorot PJU</button>'+
-          (isAnomali?'<button onclick="openPanel(\'admin\')" style="flex:1;padding:5px;background:#dc2626;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:10px;font-weight:700">⚠️ Investigasi</button>':'')+
-        '</div>'+
-      '</div>';
-    
-    L.marker(cl.center,{icon:L.divIcon({
-      className:'',
-      html:'<div style="width:'+(isAnomali?10:7)+'px;height:'+(isAnomali?10:7)+'px;background:'+color+';border:1.5px solid white;box-shadow:0 1px 3px rgba(0,0,0,.4)'+(isAnomali?';outline:2px solid rgba(220,38,38,.5);outline-offset:1px':'')+'"></div>',
-      iconSize:[isAnomali?10:7,isAnomali?10:7],iconAnchor:[isAnomali?5:3,isAnomali?5:3]
-    })}).bindPopup(garduPopup,{maxWidth:300}).addTo(cableLayer);
-  });
-
-  // Dark zone layer
-  zoneLayer = L.layerGroup();
-  DARK_ZONES.forEach(function(z){
-    var color=z.prioritas==='tinggi'?'#dc2626':z.prioritas==='sedang'?'#f97316':'#64748b';
-    var circle=L.circle([z.lat,z.lng],{
-      radius:z.radius_m, color:color, fillColor:color,
-      fillOpacity:0.12, weight:1.5, dashArray:'5,4'
+    m.pjuList.forEach(function(p){
+      var sP=f==='all'||(f==='aktif'&&p.status==='aktif')||(f==='mati'&&p.status==='mati')||(f==='ilegal'&&isA)||f==='meter';
+      if(cV&&(sP||sM)){cL.addLayer(L.polyline([[m.lat,m.lng],[p.lat,p.lng]],{color:isA?'#e74c3c':'#3498db',weight:2,opacity:.4,dashArray:'5,8'}))}
+      if(sP){
+        var pc=p.status==='aktif'?'#16a34a':'#dc2626';
+        var pi=L.divIcon({className:'',html:'<div style="width:9px;height:9px;background:'+pc+';border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>',iconSize:[9,9],iconAnchor:[4,4],popupAnchor:[0,-4]});
+        var pm=L.marker([p.lat,p.lng],{icon:pi});
+        pm.bindPopup('<div style="font-family:Segoe UI,sans-serif;min-width:160px"><div style="background:'+pc+';color:#fff;padding:6px 9px;margin:-14px -20px 6px;border-radius:4px 4px 0 0;font-weight:700;font-size:11px">💡 '+p.id+'</div><div style="font-size:10px">🔌 '+m.id+'<br>💡 '+p.jenis+' '+p.daya+'W<br>🚦 '+p.status.toUpperCase()+'</div></div>',{maxWidth:200});
+        mL.addLayer(pm);
+      }
     });
-    circle.bindPopup(
-      '<div style="font-family:Inter,sans-serif;font-size:12px;min-width:200px">'+
-      '<div style="background:'+color+';color:#fff;padding:8px 11px;margin:-13px -20px 9px;border-radius:4px 4px 0 0;font-weight:700">'+
-        'Zona Gelap — '+z.id+'</div>'+
-      '<div style="font-weight:700;margin-bottom:3px">'+z.nama+'</div>'+
-      '<div style="font-size:11px;color:#64748b;margin-bottom:3px">Kec. '+z.kec+'</div>'+
-      '<div style="font-size:11px;margin-bottom:3px">'+z.alasan+'</div>'+
-      '<div style="font-size:11px;color:#64748b">'+z.warga.toLocaleString('id-ID')+' warga terdampak &bull; Est. '+z.est_titik+' titik PJU</div>'+
-      '<button onclick="openPanel(\'pasang\')" style="margin-top:9px;width:100%;padding:5px;background:'+color+';color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700">Ajukan Pemasangan PJU</button>'+
-      '</div>',{maxWidth:240}
-    );
-    L.marker([z.lat,z.lng],{icon:L.divIcon({
-      className:'',
-      html:'<div style="font-size:9px;font-weight:700;background:'+color+';color:#fff;padding:2px 5px;border-radius:3px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">Zona Gelap</div>',
-      iconAnchor:[35,10]
-    })}).addTo(zoneLayer);
-    circle.addTo(zoneLayer);
-  });
-
-  // Report layer
-  reportLayer=L.layerGroup().addTo(map);
-
-  // Load all markers
-  loadMarkers('all');
-  map.addLayer(clusterLayer);
-  addReportMarkers();
-
-  map.setView([-6.4217,108.2460],11);
-}
-
-function makeIcon(status,size){
-  size=size||9;
-  var c=STATUS_COLOR[status]||'#64748b';
-  var glow=status==='anomali'?'0 0 6px rgba(124,58,237,.6)':'0 1px 3px rgba(0,0,0,.3)';
-  var extraBorder=status==='anomali'?'outline:1.5px solid #c4b5fd;outline-offset:1px;':'';
-  return L.divIcon({
-    className:'',
-    html:'<div style="width:'+size+'px;height:'+size+'px;background:'+c+';border:2px solid rgba(255,255,255,.9);border-radius:50%;box-shadow:'+glow+';'+extraBorder+'"></div>',
-    iconSize:[size,size],iconAnchor:[size/2,size/2],popupAnchor:[0,-size/2]
   });
 }
+function fM(f){cF=f;rM(f)}window.fM=fM;
+function tC(){cV=!cV;rM(cF)}window.tC=tC;
 
-function loadMarkers(filter){
-  clusterLayer.clearLayers();
-  PJU_DATA.forEach(function(d){
-    if(!d[1]||!d[2]) return;
-    var st=d[10]||'normal';
-    if(filter!=='all'&&st!==filter) return;
-    var m=L.marker([d[1],d[2]],{icon:makeIcon(st,9),pstatus:st});
-    m.bindPopup(function(){ return buildPop(d); },{maxWidth:290,className:'pju-pop-wrap'});
-    clusterLayer.addLayer(m);
-  });
+// ===== GARDU SELECT =====
+function initGarduSel(){
+  var s=document.getElementById('tp-gardu');if(!s)return;
+  METER_DATA.forEach(function(m){var o=document.createElement('option');o.value=m.gardu;o.textContent=m.gardu+' ('+m.jmlPJU+' PJU)'+(m.status==='anomali'?' ⚠️':'');s.appendChild(o)});
+}
+function sGI(v){
+  var b=document.getElementById('tp-info');if(!v){b.className='mib';return}
+  var m=METER_DATA.find(function(x){return x.gardu===v});if(!m){b.className='mib';return}
+  b.className='mib show';
+  b.innerHTML='<b>⚡ '+m.id+'</b> — '+m.ulp+(m.status==='anomali'?' <span style="color:#dc2626">⚠️</span>':'')+'<br>'+m.jmlPJU+' PJU | '+(m.totalDaya/1000).toFixed(1)+'kW | '+m.kwhPerDay+' kWh/hari';
+}
+window.sGI=sGI;
+
+// ===== UPLOAD =====
+function pU(i,z){var f=i.files[0];if(!f)return;var r=new FileReader();r.onload=function(e){var el=document.getElementById(z);el.classList.add('hp');el.innerHTML='<img src="'+e.target.result+'"><input type="file" accept="image/*" capture="environment" onchange="pU(this,\''+z+'\')">'};r.readAsDataURL(f)}
+window.pU=pU;
+function gG(a,b,btn){if(!navigator.geolocation){alert('GPS tidak tersedia');return}btn.textContent='📡...';btn.disabled=true;navigator.geolocation.getCurrentPosition(function(p){document.getElementById(a).value=p.coords.latitude.toFixed(6);document.getElementById(b).value=p.coords.longitude.toFixed(6);btn.textContent='✅';setTimeout(function(){btn.textContent='📱 Ambil GPS';btn.disabled=false},2e3)},function(){btn.textContent='❌';btn.disabled=false;setTimeout(function(){btn.textContent='📱 Ambil GPS'},2e3)},{enableHighAccuracy:true,timeout:1e4})}
+window.gG=gG;
+
+function sPJU(){
+  var la=document.getElementById('tp-lat').value,lo=document.getElementById('tp-lng').value,g=document.getElementById('tp-gardu').value;
+  if(!la||!lo){alert('GPS wajib!');return}if(!g){alert('Pilih Gardu!');return}
+  var h=document.getElementById('th');if(h.querySelector('div[style]')&&h.textContent.indexOf('Belum')>-1)h.innerHTML='';
+  var d=document.createElement('div');d.style.cssText='background:#f0fff4;border:1.5px solid #86efac;border-radius:7px;padding:9px;margin-bottom:6px;font-size:11px';
+  d.innerHTML='<b style="color:#166534">✅ PJU → '+g+'</b><br>📍'+la+','+lo+' | '+new Date().toLocaleTimeString('id-ID');
+  h.prepend(d);
+  showM('PJU berhasil di-tag ke gardu '+g);
+  document.getElementById('tp-lat').value='';document.getElementById('tp-lng').value='';document.getElementById('tp-gardu').value='';document.getElementById('tp-info').className='mib';
+}
+window.sPJU=sPJU;
+
+function sMTR(){
+  var la=document.getElementById('tm-lat').value,lo=document.getElementById('tm-lng').value,g=document.getElementById('tm-g').value;
+  if(!la||!lo){alert('GPS wajib!');return}if(!g){alert('Gardu wajib!');return}
+  var h=document.getElementById('mh');if(h.textContent.indexOf('Belum')>-1)h.innerHTML='';
+  var d=document.createElement('div');d.style.cssText='background:#fffbeb;border:1.5px solid #fde68a;border-radius:7px;padding:9px;margin-bottom:6px;font-size:11px';
+  d.innerHTML='<b style="color:#92400e">⚡ '+g+' Tersimpan</b><br>📍'+la+','+lo+' | '+new Date().toLocaleTimeString('id-ID');
+  h.prepend(d);showM('Meter '+g+' berhasil disimpan');
+  document.getElementById('tm-lat').value='';document.getElementById('tm-lng').value='';document.getElementById('tm-g').value='';
+}
+window.sMTR=sMTR;
+
+// ===== TABLES =====
+function initTables(S){
+  var pb=document.getElementById('tPB'),c=0;
+  METER_DATA.forEach(function(m){m.pjuList.forEach(function(p){if(c>=200)return;c++;
+    var s=p.status==='aktif'?'sb-g':'sb-r',l=p.status==='aktif'?'✅ Aktif':'🔴 Mati';
+    pb.innerHTML+='<tr><td><code>'+p.id+'</code></td><td>'+m.gardu+'</td><td>'+m.ulp+'</td><td>'+p.daya+'W</td><td>'+p.jenis+'</td><td>'+p.tiang+'</td><td style="font-size:9px">'+p.lat.toFixed(4)+','+p.lng.toFixed(4)+'</td><td><span class="sb '+s+'">'+l+'</span></td></tr>'})});
+  document.getElementById('tPI').textContent=c+' dari '+S.totalPJU+' data';
+  var mb=document.getElementById('tMB');
+  METER_DATA.slice(0,100).forEach(function(m){
+    var s=m.status==='anomali'?'sb-p':'sb-g',l=m.status==='anomali'?'⚠️+'+m.anomaliPct+'%':'✅';
+    mb.innerHTML+='<tr'+(m.status==='anomali'?' style="background:#fff5f5"':'')+'><td><code>'+m.id+'</code></td><td>'+m.gardu+'</td><td style="font-size:9px">'+m.pln+'</td><td>'+m.ulp+'</td><td><b>'+m.jmlPJU+'</b></td><td>'+(m.totalDaya/1e3).toFixed(1)+'kW</td><td>'+m.kwhPerDay+'</td><td>Rp'+(m.tagihanBln/1e6).toFixed(1)+'Jt</td><td><span class="sb '+s+'">'+l+'</span></td></tr>'});
+  document.getElementById('tMI').textContent=Math.min(METER_DATA.length,100)+' dari '+METER_DATA.length+' meter';
+}
+function fT(v){document.querySelectorAll('#tPB tr').forEach(function(r){r.style.display=r.textContent.toLowerCase().indexOf(v.toLowerCase())>-1?'':'none'})}
+window.fT=fT;
+
+// ===== ILEGAL =====
+function initIlegal(){
+  var a=METER_DATA.filter(function(m){return m.status==='anomali'}).sort(function(a,b){return b.anomaliPct-a.anomaliPct});
+  var hi=a.filter(function(m){return m.anomaliPct>=40}),md=a.filter(function(m){return m.anomaliPct<40});
+  document.getElementById('iS').innerHTML=
+    '<div class="sc"><div class="si2" style="background:rgba(155,89,182,.1);color:#9b59b6">⚠️</div><div><div class="n" style="color:#9b59b6">'+a.length+'</div><div class="l">Total Indikasi</div></div></div>'+
+    '<div class="sc"><div class="si2" style="background:rgba(231,76,60,.1);color:#e74c3c">🔴</div><div><div class="n" style="color:#e74c3c">'+hi.length+'</div><div class="l">Risiko Tinggi</div></div></div>'+
+    '<div class="sc"><div class="si2" style="background:rgba(243,156,18,.1);color:#f39c12">🟡</div><div><div class="n" style="color:#f39c12">'+md.length+'</div><div class="l">Risiko Sedang</div></div></div>';
+  var il=document.getElementById('iL');
+  a.slice(0,25).forEach(function(m){
+    var c=m.anomaliPct>=40?'#e74c3c':'#f39c12',bg=m.anomaliPct>=40?'#fff5f5':'#fffbeb';
+    il.innerHTML+='<div style="border-left:3px solid '+c+';background:'+bg+';padding:12px;border-radius:0 7px 7px 0;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:12px">'+m.id+' — '+m.gardu+'</b><span style="background:rgba(0,0,0,.05);color:'+c+';padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">+'+m.anomaliPct+'%</span></div><div style="font-size:11px;color:#666">'+m.ulp+' | '+m.jmlPJU+' PJU | '+(m.totalDaya/1e3).toFixed(1)+'kW</div><div style="font-size:11px;margin-top:3px">Est: '+m.kwhEst+' → Aktual: <b style="color:'+c+'">'+m.kwhPerDay+'</b> kWh/hari | Tagihan: Rp'+(m.tagihanBln/1e6).toFixed(1)+'Jt</div></div>'});
 }
 
-function buildPop(d){
-  var st=d[10]||'normal';
-  var c=STATUS_COLOR[st]||'#64748b';
-  var ulpC=ULP_COLOR[d[7]]||'#334155';
-  var idx=parseInt(d[0].slice(-3),10);
-  var photoPJU=PHOTOS_PJU[idx%PHOTOS_PJU.length];
-  var photoMeter=PHOTOS_METER[idx%PHOTOS_METER.length];
-  var stLabel={normal:'Normal',mati:'Mati',berkedip:'Berkedip',anomali:'Anomali — Indikasi Pencurian',bongkar:'Bongkar'}[st]||st;
-  var kwh_diff=d[12]>0&&d[11]>0?((d[12]-d[11])/d[11]*100).toFixed(1):'—';
-  var kwhColor=d[12]>d[11]*1.15?'#dc2626':d[12]>d[11]*1.05?'#ea580c':'#16a34a';
-  var anomali_html='';
-  if(st==='anomali'&&d[14]){
-    anomali_html='<div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:5px;padding:6px 8px;margin:5px 0;font-size:10px;color:#5b21b6">'+
-      '<b>Indikator anomali:</b><br>'+d[14].replace(/,/g,'<br>')+'</div>';
-  }
-  // Unique popup ID for toggle
-  var uid='pop_'+d[0];
-  var div=document.createElement('div');
-  div.className='pju-pop';
-  div.id=uid;
-  div.innerHTML=
-    '<div class="pp-hd" style="background:'+ulpC+'">'+
-      '<div class="pid">ID: '+d[0]+'</div>'+
-      '<div class="pulp">'+d[7]+'</div>'+
-    '</div>'+
-    // ── Photo toggle tabs ──
-    '<div style="display:flex;gap:0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;margin-bottom:8px">'+
-      '<button id="'+uid+'_btn_pju" onclick="togglePopPhoto(\''+uid+'\',\'pju\')" '+
-        'style="flex:1;padding:6px 4px;border:none;background:#0f2340;color:#f5a623;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;border-right:1px solid #e2e8f0">'+
-        '🔦 Foto PJU'+
-      '</button>'+
-      '<button id="'+uid+'_btn_meter" onclick="togglePopPhoto(\''+uid+'\',\'meter\')" '+
-        'style="flex:1;padding:6px 4px;border:none;background:#fff;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">'+
-        '📊 Foto kWh Meter'+
-      '</button>'+
-    '</div>'+
-    // ── Photo PJU ──
-    '<div id="'+uid+'_pjuphoto" style="display:block;position:relative">'+
-      '<img src="'+photoPJU+'" alt="Foto PJU" '+
-        'style="width:100%;height:105px;object-fit:cover;border-radius:6px;cursor:pointer;display:block" '+
-        'onclick="openPV(\''+photoPJU+'\',\'Foto PJU – '+d[0]+'\')">'+
-      '<div style="position:absolute;bottom:4px;left:5px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px">'+
-        '🔦 Titik PJU — klik perbesar'+
-      '</div>'+
-      '<div style="position:absolute;top:4px;right:5px;background:'+(st==='normal'?'#16a34a':c)+';color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px">'+
-        stLabel+
-      '</div>'+
-    '</div>'+
-    // ── Photo Meter ──
-    '<div id="'+uid+'_meterphoto" style="display:none;position:relative">'+
-      '<img src="'+photoMeter+'" alt="Foto kWh Meter" '+
-        'style="width:100%;height:105px;object-fit:cover;border-radius:6px;cursor:pointer;display:block" '+
-        'onclick="openPV(\''+photoMeter+'\',\'kWh Meter – No. '+d[5]+'\')">'+
-      '<div style="position:absolute;bottom:4px;left:5px;background:rgba(0,0,0,.55);color:#fff;font-size:9px;padding:2px 6px;border-radius:3px">'+
-        '📊 kWh Meter — klik perbesar'+
-      '</div>'+
-      (d[5]?'<div style="position:absolute;top:4px;left:5px;background:rgba(15,35,64,.8);color:#f5a623;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px">'+
-        'Meter: '+d[5]+
-      '</div>':'')+
-    '</div>'+
-    // ── Info rows ──
-    '<div style="margin-top:7px">'+
-      '<div class="pp-row"><span class="pp-lbl">⚡ Daya</span><span class="pp-val" style="font-weight:800">'+parseInt(d[3]).toLocaleString('id-ID')+' W</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">🏗️ Gardu</span><span class="pp-val">'+(d[4]||'—')+'</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">📊 Meter</span><span class="pp-val" style="font-size:10px;font-variant-numeric:tabular-nums">'+(d[5]||'—')+'</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">🏷️ Merk</span><span class="pp-val">'+(d[6]||'—')+'</span></div>'+
-      '<div class="pp-row"><span class="pp-lbl">📅 Thn Buat</span><span class="pp-val">'+(d[9]||'—')+'</span></div>'+
-    '</div>'+
-    // ── kWh bar ──
-    '<div style="background:#f8fafc;border-radius:6px;padding:7px 8px;margin:6px 0;border:1px solid #e2e8f0">'+
-      '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:4px">'+
-        '<span style="color:#64748b">📐 kWh Estimasi</span><span>'+d[11]+' / hari</span>'+
-      '</div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:5px">'+
-        '<span style="color:#64748b">⚡ kWh Aktual</span>'+
-        '<span style="color:'+kwhColor+'">'+d[12]+' / hari '+(d[12]>d[11]?'&#9650;+'+kwh_diff+'%':d[12]<d[11]?'&#9660;':'—')+'</span>'+
-      '</div>'+
-      '<div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden">'+
-        '<div style="height:100%;border-radius:2px;background:'+kwhColor+';width:'+Math.min(100,Math.round(d[12]/Math.max(d[11],0.1)*100))+'%;transition:width .5s"></div>'+
-      '</div>'+
-    '</div>'+
-    anomali_html+
-    '<div class="pp-btns">'+
-      '<button style="background:#dc2626;color:#fff" onclick="map.closePopup();prefillLapor('+d[1]+','+d[2]+')">📸 Lapor Masalah</button>'+
-      '<button style="background:#2563eb;color:#fff" onclick="map.closePopup();openPanel(\'pasang\')">💡 Minta Pasang</button>'+
-    '</div>';
-  return div;
-}
-
-// Toggle between PJU photo and Meter photo inside popup
-window.togglePopPhoto=function(uid,view){
-  var pjuDiv=document.getElementById(uid+'_pjuphoto');
-  var meterDiv=document.getElementById(uid+'_meterphoto');
-  var btnPju=document.getElementById(uid+'_btn_pju');
-  var btnMeter=document.getElementById(uid+'_btn_meter');
-  if(!pjuDiv||!meterDiv) return;
-  if(view==='pju'){
-    pjuDiv.style.display='block'; meterDiv.style.display='none';
-    if(btnPju){btnPju.style.background='#0f2340';btnPju.style.color='#f5a623';}
-    if(btnMeter){btnMeter.style.background='#fff';btnMeter.style.color='#64748b';}
-  } else {
-    pjuDiv.style.display='none'; meterDiv.style.display='block';
-    if(btnMeter){btnMeter.style.background='#0f2340';btnMeter.style.color='#f5a623';}
-    if(btnPju){btnPju.style.background='#fff';btnPju.style.color='#64748b';}
-  }
-  // Force popup to recalculate height
-  setTimeout(function(){
-    document.querySelectorAll('.leaflet-popup').forEach(function(p){
-      var tip=p.querySelector('.leaflet-popup-tip-container');
-      if(tip) p._leaflet_pos && map && map.invalidateSize&&map.invalidateSize();
-    });
-  },50);
-};
-
-function addReportMarkers(){
-  reportLayer.clearLayers();
-  userReports.forEach(function(r){
-    if(r.status==='selesai') return;
-    var m=L.marker([r.lat,r.lng],{icon:L.divIcon({
-      className:'',
-      html:'<div style="width:12px;height:12px;background:#dc2626;border:2px solid white;border-radius:50%;box-shadow:0 0 7px rgba(220,38,38,.7)"></div>',
-      iconSize:[12,12],iconAnchor:[6,6],popupAnchor:[0,-6]
-    })});
-    m.bindPopup(
-      '<div style="font-family:Inter,sans-serif;font-size:12px">'+
-      '<div style="background:#dc2626;color:#fff;padding:7px 10px;margin:-13px -20px 8px;border-radius:4px 4px 0 0;font-weight:700">Laporan Warga</div>'+
-      '<b>'+r.id+'</b><br><span style="color:#64748b;font-size:11px">'+r.lokasi+'</span><br>'+
-      '<span style="font-size:11px">'+r.masalah+'</span>'+
-      '<br><button onclick="openPanel(\'laporan\')" style="margin-top:8px;width:100%;padding:5px;background:#dc2626;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700">Lihat Laporan</button>'+
-      '</div>',{maxWidth:220});
-    reportLayer.addLayer(m);
-  });
-}
-
-// ── Map controls ──
-function mapFilter(type,btn){
-  document.querySelectorAll('.mf-btn').forEach(function(b){b.classList.remove('active')});
-  btn.classList.add('active');
-  loadMarkers(type);
-}
-function toggleCables(btn){
-  showCables=!showCables;
-  btn.classList.toggle('active',showCables);
-  if(showCables) cableLayer.addTo(map); else map.removeLayer(cableLayer);
-}
-function toggleDarkZones(btn){
-  showZones=!showZones;
-  btn.classList.toggle('active',showZones);
-  if(showZones) zoneLayer.addTo(map); else map.removeLayer(zoneLayer);
-}
-function locateUser(){
-  if(!navigator.geolocation){showToast('GPS tidak tersedia');return;}
-  showToast('Mengambil lokasi...');
-  navigator.geolocation.getCurrentPosition(function(p){
-    map.flyTo([p.coords.latitude,p.coords.longitude],16,{duration:1.2});
-    L.circleMarker([p.coords.latitude,p.coords.longitude],{radius:7,color:'#2563eb',fillColor:'#2563eb',fillOpacity:.7,weight:2}).addTo(map).bindPopup('Lokasi Anda').openPopup();
-    showToast('Lokasi ditemukan!');
-  },function(){showToast('Gagal ambil lokasi GPS');});
-}
-
-// ================================================================
-// PANEL SYSTEM
-// ================================================================
-var PANEL_TITLES={home:'Statistik PJU',lapor:'Lapor PJU Bermasalah',tiket:'🎫 Cek Status Laporan',laporan:'Daftar Laporan',pasang:'Minta Pasang PJU',forum:'Forum Warga',admin:'Dashboard Admin',tagpju:'📸 Upload & Tagging PJU',tagmeter:'⚡ Upload & Tagging Meter'};
-function openPanel(name){
-  document.getElementById('panel-title').textContent=PANEL_TITLES[name]||name;
-  document.getElementById('panel').classList.add('open');
-  document.querySelectorAll('.tnav-btn').forEach(function(b){b.classList.remove('active')});
-  var nb=document.getElementById('nb-'+name);
-  if(nb) nb.classList.add('active');
-  var body=document.getElementById('panel-body');
-  body.innerHTML='';
-  ({home:renderHome,lapor:renderLapor,tiket:renderTiket,laporan:renderLaporan,pasang:renderPasang,forum:renderForum,admin:renderAdmin,tagpju:renderTagPJU,tagmeter:renderTagMeter}[name]||function(){})(body);
-}
-function closePanel(){
-  document.getElementById('panel').classList.remove('open');
-  document.querySelectorAll('.tnav-btn').forEach(function(b){b.classList.remove('active')});
-}
-
-// ================================================================
-// RENDER: HOME
-// ================================================================
-function renderHome(el){
-  var s=STATS;
-  // Calculate billing estimation
-  var now=new Date();
-  var startOfYear=new Date(2025,0,1);
-  var totalDays=Math.floor((now-startOfYear)/(1000*60*60*24));
-  var kwhPerDay=parseFloat(s.kwh_act_total)||247.8;
-  var totalKwh=kwhPerDay*totalDays;
-  var tarifPln=1497;
-  var totalBill=totalKwh*tarifPln;
-  var todayStr=now.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
-  
-  el.innerHTML=
-  '<div class="sec">'+
-    // ── BILLING ESTIMATION CARD ──
-    '<div class="billing-hero">'+
-      '<div class="bh-title">💰 Estimasi Tagihan Listrik PJU &mdash; 1 Jan 2025 s.d. Hari Ini</div>'+
-      '<div class="bh-amount">Rp '+Math.round(totalBill).toLocaleString('id-ID')+'</div>'+
-      '<div class="bh-sub">Periode: 1 Januari 2025 &mdash; '+todayStr+' ('+totalDays+' hari)</div>'+
-      '<div class="billing-grid">'+
-        '<div class="billing-item"><div class="bv">'+Math.round(totalKwh).toLocaleString('id-ID')+'</div><div class="bl">Total kWh</div></div>'+
-        '<div class="billing-item"><div class="bv">'+kwhPerDay.toLocaleString('id-ID')+'</div><div class="bl">kWh / Hari</div></div>'+
-        '<div class="billing-item"><div class="bv">Rp 1.497</div><div class="bl">Tarif PLN/kWh</div></div>'+
-        '<div class="billing-item"><div class="bv">'+s.total.toLocaleString('id-ID')+'</div><div class="bl">Total PJU</div></div>'+
-        '<div class="billing-item"><div class="bv">318</div><div class="bl">Meter Aktif</div></div>'+
-        '<div class="billing-item"><div class="bv" style="color:#ff8a8a">+'+((parseFloat(s.kwh_act_total)-parseFloat(s.kwh_total))/parseFloat(s.kwh_total)*100).toFixed(1)+'%</div><div class="bl">Anomali kWh</div></div>'+
-      '</div>'+
-    '</div>'+
-    '<img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&h=200&fit=crop" class="hero" alt="PJU Indramayu">'+
-    '<div class="sec-title">Ringkasan PJU Kabupaten Indramayu</div>'+
-    '<div class="stat-row">'+
-      '<div class="stat-box"><div class="n" style="color:#2563eb">'+s.total.toLocaleString('id-ID')+'</div><div class="l">Total Titik PJU</div></div>'+
-      '<div class="stat-box"><div class="n" style="color:#16a34a">'+(s.counts.normal||0)+'</div><div class="l">Normal / Aktif</div></div>'+
-      '<div class="stat-box"><div class="n" style="color:#dc2626">'+(s.counts.mati||0)+'</div><div class="l">Mati</div></div>'+
-    '</div>'+
-    '<div class="stat-row">'+
-      '<div class="stat-box"><div class="n" style="color:#f97316">'+(s.counts.berkedip||0)+'</div><div class="l">Berkedip</div></div>'+
-      '<div class="stat-box"><div class="n" style="color:#7c3aed">'+(s.counts.anomali||0)+'</div><div class="l">Anomali*</div></div>'+
-      '<div class="stat-box"><div class="n" style="color:#64748b">'+(s.counts.bongkar||0)+'</div><div class="l">Bongkar</div></div>'+
-    '</div>'+
-    '<div class="alert al-warn" style="font-size:10px">*Anomali = indikasi konsumsi listrik tidak wajar, kemungkinan pencurian daya atau koneksi tidak sah.</div>'+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Konsumsi Daya Harian</div>'+
-    '<div class="stat-row two">'+
-      '<div class="stat-box"><div class="n" style="color:#334155;font-size:17px">'+parseFloat(s.kwh_total).toLocaleString('id-ID')+' kWh</div><div class="l">Estimasi normal/hari</div></div>'+
-      '<div class="stat-box"><div class="n" style="color:#dc2626;font-size:17px">'+parseFloat(s.kwh_act_total).toLocaleString('id-ID')+' kWh</div><div class="l">Aktual terukur/hari</div></div>'+
-    '</div>'+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Sebaran per ULP</div>'+
-    Object.entries({
-      'ULP Haurgeulis':[625,'#f97316'],'ULP Indramayu':[526,'#2563eb'],
-      'ULP Kandanghaur':[408,'#a855f7'],'ULP Jatibarang':[316,'#16a34a']
-    }).map(function(e){
-      var pct=Math.round(e[1][0]/1875*100);
-      return '<div class="ulp-item">'+
-        '<div class="ulp-hd"><span class="nm">'+e[0]+'</span><span style="font-weight:700;color:'+e[1][1]+'">'+e[1][0]+'</span></div>'+
-        '<div class="pbar"><div class="pfill" style="background:'+e[1][1]+';width:'+pct+'%"></div></div>'+
-      '</div>';
-    }).join('')+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Zona Gelap ('+DARK_ZONES.length+' teridentifikasi)</div>'+
-    '<div class="alert al-info" style="font-size:10px">'+DARK_ZONES.filter(function(z){return z.prioritas==='tinggi';}).length+' zona prioritas tinggi. Aktifkan "Zona Gelap" di peta untuk melihat persebaran.</div>'+
-    '<button class="btn btn-navy btn-full" onclick="toggleDarkZones(document.getElementById(\'mf-gelap\'));closePanel()">Tampilkan Zona Gelap di Peta</button>'+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Jalur Kabel & Feeder</div>'+
-    '<div style="font-size:11px;color:#64748b;line-height:1.6;margin-bottom:8px">'+
-      CABLE_LINES.length+' jalur kabel terdeteksi dari '+
-      CABLE_LINES.filter(function(c){return c.status==='anomali';}).length+' gardu anomali dan '+
-      CABLE_LINES.filter(function(c){return c.status==='degraded';}).length+' gardu degradasi.'+
-    '</div>'+
-    '<button class="btn btn-navy btn-full" onclick="toggleCables(document.getElementById(\'mf-kabel\'));closePanel()">Tampilkan Jalur Kabel di Peta</button>'+
-    '<a href="visualisasi.html" class="btn btn-gold btn-full" style="text-decoration:none;text-align:center;margin-top:6px;display:block">⚡ Buka Peta Visualisasi Jaringan KWH Meter → PJU</a>'+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Layanan Masyarakat</div>'+
-    '<div style="display:flex;flex-direction:column;gap:6px">'+
-      '<button class="btn btn-red btn-full" onclick="openPanel(\'lapor\')">📸 Lapor PJU Bermasalah</button>'+
-      '<button class="btn btn-navy btn-full" onclick="openPanel(\'pasang\')">💡 Ajukan Pasang PJU Baru</button>'+
-      '<button class="btn btn-outline btn-full" onclick="openPanel(\'tiket\')">🎫 Cek Status Laporan</button>'+
-      '<button class="btn btn-outline btn-full" onclick="openPanel(\'forum\')">💬 Forum Diskusi Warga</button>'+
-    '</div>'+
-    (isLoggedIn?
-    '<div class="div"></div>'+
-    '<div class="sec-title">🔧 Pendataan (Admin)</div>'+
-    '<div style="display:flex;flex-direction:column;gap:6px">'+
-      '<button class="btn btn-green btn-full" onclick="openPanel(\'tagpju\')">📸 Upload & Tagging PJU</button>'+
-      '<button class="btn btn-gold btn-full" onclick="openPanel(\'tagmeter\')">⚡ Upload & Tagging KWH Meter</button>'+
-    '</div>':'')+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Export Data</div>'+
-    '<div style="display:flex;gap:6px">'+
-      '<button class="btn btn-outline btn-full" onclick="exportCSV()">📊 Export PJU (CSV)</button>'+
-      '<button class="btn btn-outline btn-full" onclick="exportLaporan()">📋 Export Laporan</button>'+
-    '</div>'+
-  '</div>';
-}
-
-// ================================================================
-// RENDER: LAPOR
-// ================================================================
-function renderLapor(el){
-  el.innerHTML=
-  '<div class="sec">'+
-    '<img src="https://images.unsplash.com/photo-1531492898902-e2e2d0d57de1?w=700&h=180&fit=crop" class="hero" alt="Laporan PJU">'+
-    '<div class="alert al-info">Laporan Anda membantu mempercepat perbaikan. Tidak perlu login.</div>'+
-    '<div class="fg"><label>Lokasi / Nama Jalan</label><input type="text" class="fc" id="l-lok" placeholder="Jl. Sudirman No.23, Indramayu"></div>'+
-    '<div class="frow"><div class="fg"><label>Latitude</label><input type="text" class="fc" id="l-lat" placeholder="-6.3318"></div><div class="fg"><label>Longitude</label><input type="text" class="fc" id="l-lng" placeholder="108.3243"></div></div>'+
-    '<div class="fg"><button class="gps-btn" onclick="getGPS(\'l-lat\',\'l-lng\',this)">&#127759; Ambil Lokasi Otomatis (GPS)</button></div>'+
-    '<div class="fg"><label>Jenis Masalah</label>'+
-      '<select class="fc" id="l-mas"><option value="">-- Pilih --</option>'+
-      ['Lampu mati total','Lampu berkedip','Tiang miring / roboh','Kabel rusak / putus','Kap lampu pecah','Lampu nyala siang hari','PJU tidak terdaftar / mencurigakan','Masalah lainnya'].map(function(o){return '<option>'+o+'</option>';}).join('')+
-      '</select></div>'+
-    '<div class="fg"><label>Deskripsi</label><textarea class="fc" id="l-desc" placeholder="Ceritakan kondisi PJU secara detail..."></textarea></div>'+
-    '<div class="fg"><label>Foto Bukti (disarankan)</label>'+
-      '<div class="photo-drop" id="l-drop" onclick="document.getElementById(\'l-file\').click()">'+
-        '<div style="font-size:26px">&#128247;</div>'+
-        '<p>Klik untuk upload atau ambil dari kamera</p><span>JPG, PNG, HEIC &bull; maks 5 foto</span>'+
-      '</div>'+
-      '<input type="file" id="l-file" multiple accept="image/*" style="display:none" onchange="handleFiles(this,\'l-prev\')">'+
-      '<div class="photo-previews" id="l-prev"></div>'+
-    '</div>'+
-    '<div class="frow"><div class="fg"><label>Nama Pelapor</label><input type="text" class="fc" id="l-nama" placeholder="Nama Anda"></div><div class="fg"><label>No. HP / WhatsApp</label><input type="tel" class="fc" id="l-hp" placeholder="08xxxxxxxxxx"></div></div>'+
-    '<button class="btn btn-red btn-full" onclick="submitLaporan()">Kirim Laporan</button>'+
-    '<div class="div"></div>'+
-    '<div style="font-size:10px;color:#94a3b8;text-align:center;line-height:1.7">Respons: konfirmasi 1 jam &bull; survei lapangan 1x24 jam<br>Perbaikan ringan 3-5 hari &bull; Perbaikan berat 7-14 hari</div>'+
-  '</div>';
-}
-
-function prefillLapor(lat,lng){
-  openPanel('lapor');
-  setTimeout(function(){
-    var le=document.getElementById('l-lat'), lne=document.getElementById('l-lng');
-    if(le) le.value=lat.toFixed(6);
-    if(lne) lne.value=lng.toFixed(6);
-  },100);
-}
-
-function submitLaporan(){
-  var lok=(document.getElementById('l-lok')||{}).value||'';
-  var mas=(document.getElementById('l-mas')||{}).value||'';
-  if(!lok.trim()){showToast('Mohon isi lokasi PJU');return;}
-  if(!mas){showToast('Pilih jenis masalah');return;}
-  var id='LAP-'+String(Math.floor(Math.random()*9000)+1000);
-  var lat=parseFloat((document.getElementById('l-lat')||{}).value)||(-6.42+Math.random()*.3);
-  var lng=parseFloat((document.getElementById('l-lng')||{}).value)||(108.2+Math.random()*.3);
-  userReports.unshift({
-    id:id,lat:lat,lng:lng,lokasi:lok,masalah:mas,
-    desc:(document.getElementById('l-desc')||{}).value||'—',
-    pelapor:(document.getElementById('l-nama')||{}).value||'Anonim',
-    waktu:new Date().toLocaleString('id-ID'),status:'baru',photo:PHOTOS[0]
-  });
-  addReportMarkers();
-  showToast('Laporan terkirim! Nomor: '+id);
-  setTimeout(function(){openPanel('laporan');},1000);
-}
-
-// ================================================================
-// RENDER: LAPORAN LIST
-// ================================================================
-function renderLaporan(el){
-  function draw(filter){
-    var list=filter==='all'?userReports:userReports.filter(function(r){return r.status===filter;});
-    var cnt={all:userReports.length,baru:userReports.filter(function(r){return r.status==='baru';}).length,proses:userReports.filter(function(r){return r.status==='proses';}).length,selesai:userReports.filter(function(r){return r.status==='selesai';}).length};
-    el.innerHTML=
-    '<div class="sec">'+
-      '<div class="stat-row">'+
-        '<div class="stat-box"><div class="n" style="color:#1e293b">'+cnt.all+'</div><div class="l">Total</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#dc2626">'+cnt.baru+'</div><div class="l">Baru</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#16a34a">'+cnt.selesai+'</div><div class="l">Selesai</div></div>'+
-      '</div>'+
-      '<div class="tabs">'+
-        ['all','baru','proses','selesai'].map(function(s){
-          var lbl={all:'Semua ('+cnt.all+')',baru:'Baru ('+cnt.baru+')',proses:'Diproses ('+cnt.proses+')',selesai:'Selesai ('+cnt.selesai+')'}[s];
-          return '<button class="tab-btn'+(filter===s?' active':'')+'" onclick="window._lapFilter(\''+s+'\')">'+lbl+'</button>';
-        }).join('')+
-      '</div>'+
-      list.map(function(r){
-        var bc={baru:'c-red',proses:'c-orange',selesai:'c-green'}[r.status]||'';
-        var bl={baru:'b-red',proses:'b-orange',selesai:'b-green'}[r.status]||'b-gray';
-        var ll={baru:'Baru',proses:'Diproses',selesai:'Selesai'}[r.status]||r.status;
-        return '<div class="card '+bc+'">'+
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">'+
-            '<h4>'+r.id+' — '+r.masalah+'</h4>'+
-            '<span class="badge '+bl+'">'+ll+'</span>'+
-          '</div>'+
-          '<p>'+r.lokasi+'</p><p>'+r.desc+'</p>'+
-          (r.photo?'<img src="'+r.photo+'" style="width:100%;height:90px;object-fit:cover;border-radius:5px;margin-top:6px;cursor:pointer" onclick="openPV(\''+r.photo+'\',\''+r.id+'\')">':'')+
-          '<div class="meta">'+r.pelapor+' &bull; '+r.waktu+'</div>'+
-          '<div class="cfoot">'+
-            (r.status!=='selesai'?
-              '<div style="display:flex;gap:5px">'+
-                (r.status==='baru'?'<button class="btn btn-gold btn-sm" onclick="updRep(\''+r.id+'\',\'proses\')">Proses</button>':'')+
-                '<button class="btn btn-green btn-sm" onclick="updRep(\''+r.id+'\',\'selesai\')">Selesai</button>'+
-              '</div>':
-              '<span style="font-size:10px;color:#16a34a;font-weight:700">Selesai ditangani</span>')+
-            '<button class="btn btn-outline btn-sm" onclick="flyTo('+r.lat+','+r.lng+')">Lihat Peta</button>'+
-          '</div>'+
-        '</div>';
-      }).join('')+
-      (list.length===0?'<div style="text-align:center;padding:28px;color:#94a3b8;font-size:12px">Tidak ada laporan</div>':'')+
-    '</div>';
-    window._lapFilter=draw;
-  }
-  window._lapFilter=draw;
-  draw('all');
-}
-window.updRep=function(id,st){
-  var r=userReports.find(function(x){return x.id===id;});
-  if(r){r.status=st;}
-  addReportMarkers();
-  renderLaporan(document.getElementById('panel-body'));
-  showToast('Status diperbarui: '+(st==='proses'?'Diproses':'Selesai'));
-};
-window.flyTo=function(lat,lng){map.flyTo([lat,lng],16,{duration:1.2});showToast('Navigasi ke lokasi');};
-
-// ================================================================
-// RENDER: PASANG
-// ================================================================
-function renderPasang(el){
-  var kecs=['Indramayu','Sindang','Jatibarang','Lohbener','Haurgeulis','Kandanghaur','Pasekan','Cantigi','Arahan','Lelea','Widasari','Kertasemaya','Lainnya'];
-  el.innerHTML=
-  '<div class="sec">'+
-    '<img src="https://images.unsplash.com/photo-1516912481808-3406841bd33c?w=700&h=180&fit=crop" class="hero" alt="Pasang PJU">'+
-    '<div class="alert al-info">Tidak perlu login. Tim PUPR akan menindaklanjuti dalam 7 hari kerja.</div>'+
-    '<div class="fg"><label>Nama Jalan / Lokasi</label><input type="text" class="fc" id="p-lok" placeholder="Jl. Gang Melati RT.03, Indramayu"></div>'+
-    '<div class="frow">'+
-      '<div class="fg"><label>Desa / Kelurahan</label><input type="text" class="fc" id="p-desa" placeholder="Nama desa"></div>'+
-      '<div class="fg"><label>Kecamatan</label><select class="fc" id="p-kec"><option value="">-- Pilih --</option>'+kecs.map(function(k){return '<option>'+k+'</option>';}).join('')+'</select></div>'+
-    '</div>'+
-    '<div class="frow"><div class="fg"><label>Latitude</label><input type="text" class="fc" id="p-lat" placeholder="-6.xxxx"></div><div class="fg"><label>Longitude</label><input type="text" class="fc" id="p-lng" placeholder="108.xxxx"></div></div>'+
-    '<div class="fg"><button class="gps-btn" onclick="getGPS(\'p-lat\',\'p-lng\',this)">&#127759; Ambil Koordinat via GPS</button></div>'+
-    '<div class="frow">'+
-      '<div class="fg"><label>Estimasi Titik</label><input type="number" class="fc" id="p-titik" placeholder="5" min="1"></div>'+
-      '<div class="fg"><label>Panjang Jalan (m)</label><input type="number" class="fc" id="p-pjg" placeholder="300"></div>'+
-    '</div>'+
-    '<div class="fg"><label>Jenis Jalan</label><select class="fc"><option>Jalan Desa</option><option>Jalan Kabupaten</option><option>Jalan Provinsi</option><option>Jalan Nasional</option></select></div>'+
-    '<div class="fg"><label>Alasan & Urgensi</label><textarea class="fc" id="p-alasan" placeholder="Jelaskan kenapa PJU dibutuhkan di lokasi ini..."></textarea></div>'+
-    '<div class="fg"><label>Foto Kondisi Jalan</label>'+
-      '<div class="photo-drop" onclick="document.getElementById(\'p-file\').click()"><div style="font-size:22px">&#128247;</div><p style="font-size:11px">Upload foto kondisi jalan saat ini</p></div>'+
-      '<input type="file" id="p-file" multiple accept="image/*" style="display:none" onchange="handleFiles(this,\'p-prev\')">'+
-      '<div class="photo-previews" id="p-prev"></div>'+
-    '</div>'+
-    '<div class="frow"><div class="fg"><label>Nama Pemohon</label><input type="text" class="fc" id="p-nama" placeholder="Nama Anda / perwakilan"></div><div class="fg"><label>No. HP / WhatsApp</label><input type="tel" class="fc" id="p-hp" placeholder="08xxxxxxxxxx"></div></div>'+
-    '<button class="btn btn-navy btn-full" onclick="submitPasang()">Kirim Pengajuan</button>'+
-    '<div class="div"></div>'+
-    '<div style="font-size:10px;color:#64748b;line-height:1.8">Syarat: lokasi di Kab. Indramayu &bull; jalan sudah ada &bull; min. 5 KK/20 jiwa &bull; dukungan RT/RW &bull; belum ada PJU aktif</div>'+
-  '</div>';
-}
-function submitPasang(){
-  var lok=(document.getElementById('p-lok')||{}).value||'';
-  var kec=(document.getElementById('p-kec')||{}).value||'';
-  if(!lok.trim()){showToast('Mohon isi lokasi jalan');return;}
-  if(!kec){showToast('Pilih kecamatan terlebih dahulu');return;}
-  showToast('Pengajuan terkirim! Nomor: PRM-2025-'+String(Math.floor(Math.random()*900)+100));
-}
-
-// ================================================================
-// RENDER: FORUM
-// ================================================================
-var FORUM=[
-  {id:1,tipe:'laporan',av:'BS',color:'#dc2626',nama:'Budi Santoso',waktu:'10 menit lalu',kec:'Kec. Indramayu',judul:'PJU di Jl. Sudirman No.23 mati 6 hari!',isi:'Lampu PJU di depan rumah sudah mati 6 hari. Sangat gelap malam hari dan tidak aman untuk anak-anak. Mohon segera ditangani.',like:24,komentar:8},
-  {id:2,tipe:'usulan',av:'RT',color:'#16a34a',nama:'RT.03 Kel. Paoman',waktu:'2 jam lalu',kec:'Kec. Indramayu',judul:'Usulan 5 titik PJU di Gang Melati (300m)',isi:'Kami mengusulkan penambahan PJU di Gang Melati. Jalan 300m ini sangat gelap dan sering terjadi tindak kriminal di malam hari. Didukung 45 KK.',like:52,komentar:15},
-  {id:3,tipe:'info',av:'AD',color:'#2563eb',nama:'Admin SIPJU',waktu:'3 jam lalu',kec:'Official',judul:'Jadwal Perawatan Rutin PJU 12-15 Juni 2025',isi:'Tim PUPR akan melakukan perawatan rutin di Kecamatan Sindang dan Jatibarang. Mohon maklum jika ada gangguan sementara.',like:38,komentar:5},
-  {id:4,tipe:'laporan',av:'SW',color:'#f97316',nama:'Sri Wahyuni',waktu:'5 jam lalu',kec:'Kec. Sindang',judul:'Lampu PJU menyala siang hari di Jl. Raya Sindang',isi:'Ada PJU yang menyala dari pagi sampai sore hari di Jl. Raya Sindang KM 3. Ini tidak wajar dan pasti memborosos listrik. Apakah ini normal?',like:31,komentar:9},
-];
-function renderForum(el){
-  el.innerHTML=
-  '<div class="sec">'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">'+
-      '<div class="sec-title" style="margin-bottom:0">Diskusi Warga ('+FORUM.length+')</div>'+
-      '<button class="btn btn-navy btn-sm" onclick="renderNewPost()">+ Tulis Postingan</button>'+
-    '</div>'+
-    FORUM.map(function(p){
-      var bc={laporan:'#dc2626',usulan:'#16a34a',info:'#2563eb',pertanyaan:'#f97316'}[p.tipe]||'#64748b';
-      var bl={laporan:'b-red',usulan:'b-green',info:'b-blue',pertanyaan:'b-orange'}[p.tipe]||'b-gray';
-      var bll={laporan:'Laporan',usulan:'Usulan',info:'Info',pertanyaan:'Pertanyaan'}[p.tipe]||p.tipe;
-      var liked=likedPosts[p.id];
-      return '<div class="forum-post" style="border-left:3px solid '+bc+'">'+
-        '<div class="fp-head">'+
-          '<div class="fp-user"><div class="fp-av" style="background:'+p.color+'">'+p.av+'</div>'+
-          '<div><div class="fp-name">'+p.nama+'</div><div class="fp-time">'+p.waktu+' &bull; '+p.kec+'</div></div></div>'+
-          '<span class="badge '+bl+'">'+bll+'</span>'+
-        '</div>'+
-        '<div style="font-size:12px;font-weight:700;margin-bottom:5px">'+p.judul+'</div>'+
-        '<div class="fp-body">'+p.isi+'</div>'+
-        '<div class="fp-actions">'+
-          '<button class="fa-btn" style="'+(liked?'color:var(--blue);font-weight:700':'')+'" onclick="toggleLike('+p.id+',this)">&#9829; <span id="lc'+p.id+'">'+(liked?p.like+1:p.like)+'</span></button>'+
-          '<button class="fa-btn">&#128172; '+p.komentar+'</button>'+
-          (p.tipe==='laporan'?'<button class="fa-btn" onclick="openPanel(\'lapor\')">Lapor Resmi</button>':'')+
-          (p.tipe==='usulan'?'<button class="fa-btn" onclick="openPanel(\'pasang\')">Buat Pengajuan</button>':'')+
-        '</div>'+
-      '</div>';
-    }).join('')+
-  '</div>';
-}
-function renderNewPost(){
-  var body=document.getElementById('panel-body');
-  body.innerHTML=
-  '<div class="sec">'+
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:11px">'+
-      '<button class="btn btn-sm btn-outline" onclick="renderForum(document.getElementById(\'panel-body\'))">&#8592; Kembali</button>'+
-      '<span style="font-size:13px;font-weight:700">Tulis Postingan</span>'+
-    '</div>'+
-    '<div class="fg"><label>Kategori</label><select class="fc" id="np-kat"><option value="laporan">Laporan Masalah</option><option value="usulan">Usulan / Saran</option><option value="pertanyaan">Pertanyaan</option><option value="info">Informasi</option></select></div>'+
-    '<div class="fg"><label>Judul</label><input type="text" class="fc" id="np-judul" placeholder="Judul yang jelas dan informatif"></div>'+
-    '<div class="fg"><label>Isi Postingan</label><textarea class="fc" id="np-isi" style="min-height:90px" placeholder="Tulis diskusi, laporan, atau pertanyaan Anda..."></textarea></div>'+
-    '<div class="fg"><label>Nama Anda</label><input type="text" class="fc" id="np-nama" placeholder="Nama / username"></div>'+
-    '<button class="btn btn-navy btn-full" onclick="submitPost()">Publikasikan</button>'+
-  '</div>';
-}
-function submitPost(){
-  var j=(document.getElementById('np-judul')||{}).value||'';
-  if(!j.trim()){showToast('Mohon isi judul postingan');return;}
-  showToast('Postingan berhasil dipublikasikan!');
-  setTimeout(function(){renderForum(document.getElementById('panel-body'));},700);
-}
-window.toggleLike=function(id,btn){
-  if(likedPosts[id]){delete likedPosts[id];btn.style.color='';btn.style.fontWeight='';}
-  else{likedPosts[id]=true;btn.style.color='var(--blue)';btn.style.fontWeight='700';}
-  var p=FORUM.find(function(x){return x.id===id;});
-  var el=document.getElementById('lc'+id);
-  if(el&&p) el.textContent=likedPosts[id]?p.like+1:p.like;
-};
-
-// ================================================================
-// RENDER: ADMIN DASHBOARD
-// ================================================================
-function renderAdmin(el){
-  if(!isLoggedIn){
-    el.innerHTML='<div class="sec"><div class="alert al-warn">Halaman ini hanya untuk PLN dan Dinas PUPR. Silakan login.</div><button class="btn btn-navy btn-full" onclick="openLogin()">Login Sekarang</button></div>';
-    return;
-  }
-  var anomaliPJU=PJU_DATA.filter(function(d){return d[10]==='anomali';});
-  var matiPJU=PJU_DATA.filter(function(d){return d[10]==='mati';});
-  var kwh_est=parseFloat(STATS.kwh_total);
-  var kwh_act=parseFloat(STATS.kwh_act_total);
-  var selisih=(kwh_act-kwh_est).toFixed(1);
-  var pct_anomali=((kwh_act-kwh_est)/kwh_est*100).toFixed(1);
-
-  el.innerHTML=
-  '<div class="sec">'+
-    '<div style="display:flex;align-items:center;gap:9px;margin-bottom:13px;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border)">'+
-      '<div style="width:34px;height:34px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:800">'+loggedUser.av+'</div>'+
-      '<div><div style="font-size:12px;font-weight:700">'+loggedUser.name+'</div><div style="font-size:10px;color:var(--gray)">'+loggedUser.role+' &bull; <a onclick="doLogout()" style="cursor:pointer;color:#dc2626">Logout</a></div></div>'+
-    '</div>'+
-    '<div class="tabs" id="adm-tabs">'+
-      '<button class="tab-btn active" onclick="admTab(\'laporan\',this)">Laporan</button>'+
-      '<button class="tab-btn" onclick="admTab(\'konsumsi\',this)">Konsumsi kWh</button>'+
-      '<button class="tab-btn" onclick="admTab(\'anomali\',this)">Anomali / Pencurian</button>'+
-      '<button class="tab-btn" onclick="admTab(\'zona\',this)">Zona Gelap</button>'+
-    '</div>'+
-
-    // ── Tab: Laporan ──
-    '<div id="at-laporan" class="tc active">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
-        '<div class="sec-title" style="margin-bottom:0">Laporan Masuk</div>'+
-        '<button class="btn btn-outline btn-sm" onclick="exportLaporan()">📊 Export CSV</button>'+
-      '</div>'+
-      '<div class="stat-row">'+
-        '<div class="stat-box"><div class="n" style="color:#1e293b">'+userReports.length+'</div><div class="l">Total</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#dc2626">'+userReports.filter(function(r){return r.status==='baru';}).length+'</div><div class="l">Baru</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#16a34a">'+userReports.filter(function(r){return r.status==='selesai';}).length+'</div><div class="l">Selesai</div></div>'+
-      '</div>'+
-      userReports.map(function(r){
-        var bc={baru:'c-red',proses:'c-orange',selesai:'c-green'}[r.status]||'';
-        var bl={baru:'b-red',proses:'b-orange',selesai:'b-green'}[r.status]||'b-gray';
-        var ll={baru:'Baru',proses:'Diproses',selesai:'Selesai'}[r.status]||r.status;
-        return '<div class="card '+bc+'">'+
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px"><h4>'+r.id+'</h4><span class="badge '+bl+'">'+ll+'</span></div>'+
-          '<p>'+r.lokasi+'</p><p>'+r.masalah+'</p>'+
-          '<div class="cfoot">'+
-            (r.status!=='selesai'?
-              '<div style="display:flex;gap:5px">'+
-                (r.status==='baru'?'<button class="btn btn-gold btn-sm" onclick="updRep(\''+r.id+'\',\'proses\')">Proses</button>':'')+
-                '<button class="btn btn-green btn-sm" onclick="updRep(\''+r.id+'\',\'selesai\')">Selesai</button>'+
-              '</div>':'<span style="font-size:10px;color:#16a34a;font-weight:700">Selesai</span>')+
-            '<button class="btn btn-outline btn-sm" onclick="flyTo('+r.lat+','+r.lng+')">Peta</button>'+
-          '</div>'+
-        '</div>';
-      }).join('')+
-    '</div>'+
-
-    // ── Tab: Konsumsi ──
-    '<div id="at-konsumsi" class="tc">'+
-      '<div class="stat-row">'+
-        '<div class="stat-box"><div class="n" style="color:#2563eb;font-size:15px">'+kwh_est.toLocaleString('id-ID')+'</div><div class="l">kWh/hari estimasi</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#dc2626;font-size:15px">'+kwh_act.toLocaleString('id-ID')+'</div><div class="l">kWh/hari aktual</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#7c3aed;font-size:15px">+'+selisih+'</div><div class="l">kWh selisih (+'+pct_anomali+'%)</div></div>'+
-      '</div>'+
-      '<div class="alert al-'+(parseFloat(pct_anomali)>5?'danger':'success')+'">'+
-        (parseFloat(pct_anomali)>5?
-          'Konsumsi aktual melebihi estimasi '+pct_anomali+'%. Kemungkinan ada '+anomaliPJU.length+' PJU bermasalah atau pencurian daya.':
-          'Konsumsi dalam batas normal.')+
-      '</div>'+
-      '<div class="sec-title">Per ULP</div>'+
-      ['ULP Haurgeulis','ULP Indramayu','ULP Kandanghaur','ULP Jatibarang'].map(function(u,i){
-        var kwh=[87.4,73.6,56.8,30.0][i];
-        var pct=Math.round(kwh/87.4*100);
-        var color=ULP_COLOR[u]||'#64748b';
-        return '<div class="ulp-item">'+
-          '<div class="ulp-hd"><span class="nm">'+u+'</span><span style="font-weight:700;color:'+color+'">'+kwh+' kWh/hari</span></div>'+
-          '<div class="pbar"><div class="pfill" style="background:'+color+';width:'+pct+'%"></div></div>'+
-        '</div>';
-      }).join('')+
-      '<div class="div"></div>'+
-      '<div class="sec-title">Anomali Meter</div>'+
-      '<div class="card c-orange">'+
-        '<h4>MTR-045 — Jl. Raya Sindang</h4>'+
-        '<p>Konsumsi +42% dari estimasi. Kemungkinan ada beban tidak terdaftar.</p>'+
-        '<div class="cfoot"><span class="badge b-orange">Perlu Investigasi</span><button class="btn btn-sm btn-outline">Detail</button></div>'+
-      '</div>'+
-      '<div class="card c-purple">'+
-        '<h4>MTR-112 — Kawasan Industri Blok C</h4>'+
-        '<p>Konsumsi +87%. Indikasi koneksi bypass meter, tidak ada PJU terdaftar di lokasi ini.</p>'+
-        '<div class="cfoot"><span class="badge b-purple">Prioritas Tinggi</span><button class="btn btn-sm btn-red">Tindak Lanjut</button></div>'+
-      '</div>'+
-    '</div>'+
-
-    // ── Tab: Anomali / Pencurian ──
-    '<div id="at-anomali" class="tc">'+
-      '<div class="alert al-danger">'+anomaliPJU.length+' PJU terdeteksi anomali konsumsi daya. Kemungkinan pencurian listrik, koneksi ilegal, atau kerusakan sensor.</div>'+
-      '<div class="stat-row">'+
-        '<div class="stat-box"><div class="n" style="color:#7c3aed">'+anomaliPJU.length+'</div><div class="l">Total Anomali</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#dc2626">'+CABLE_LINES.filter(function(c){return c.status==='anomali';}).length+'</div><div class="l">Jalur Kabel Anomali</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#ea580c">'+CABLE_LINES.filter(function(c){return c.status==='degraded';}).length+'</div><div class="l">Jalur Degradasi</div></div>'+
-      '</div>'+
-      '<div class="sec-title">Penjelasan Anomali PJU</div>'+
-      '<div class="card c-purple" style="margin-bottom:8px">'+
-        '<h4>Mengapa PJU bisa "jalan tanpa listrik resmi"?</h4>'+
-        '<p>PJU yang tidak terdaftar di database PLN namun tetap menyala mengindikasikan salah satu dari: (1) koneksi langsung ke jaringan tanpa meter resmi — pencurian listrik; (2) PJU developer yang belum diserahterimakan ke Pemkab; (3) PJU ilegal yang dipasang pihak tidak berwenang; (4) meter sudah terpasang tapi tidak tercatat di sistem. Ini adalah anomali serius karena negara dirugikan.</p>'+
-      '</div>'+
-      anomaliPJU.slice(0,5).map(function(d){
-        var score=d[13]||0;
-        var flags=d[14]||'';
-        var color=score>=80?'#dc2626':score>=60?'#ea580c':'#ca8a04';
-        return '<div class="card c-purple">'+
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">'+
-            '<h4>PJU '+d[0]+'</h4>'+
-            '<span class="badge b-purple">Skor '+score+'%</span>'+
-          '</div>'+
-          '<p>Gardu: '+(d[4]||'—')+' &bull; ULP: '+d[7]+'</p>'+
-          '<p>kWh Est: '+d[11]+' &bull; kWh Aktual: <span style="color:'+color+';font-weight:700">'+d[12]+'</span></p>'+
-          (flags?'<p style="margin-top:4px;color:'+color+'">Indikator: '+flags+'</p>':'')+
-          '<div class="risk-bar">'+
-            '<span class="label">Risiko</span>'+
-            '<div class="bar"><div class="fill" style="width:'+score+'%;background:'+color+'"></div></div>'+
-          '</div>'+
-          '<div class="cfoot" style="margin-top:8px">'+
-            '<button class="btn btn-red btn-sm" onclick="flyTo('+d[1]+','+d[2]+')">Lihat Peta</button>'+
-            '<button class="btn btn-outline btn-sm">Verifikasi Lapangan</button>'+
-          '</div>'+
-        '</div>';
-      }).join('')+
-      (anomaliPJU.length>5?'<div style="text-align:center;font-size:11px;color:#64748b;padding:8px">... dan '+(anomaliPJU.length-5)+' PJU lainnya</div>':'')+
-    '</div>'+
-
-    // ── Tab: Zona Gelap ──
-    '<div id="at-zona" class="tc">'+
-      '<div class="stat-row">'+
-        '<div class="stat-box"><div class="n" style="color:#1e293b">'+DARK_ZONES.length+'</div><div class="l">Total Zona</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#dc2626">'+DARK_ZONES.filter(function(z){return z.prioritas==='tinggi';}).length+'</div><div class="l">Prioritas Tinggi</div></div>'+
-        '<div class="stat-box"><div class="n" style="color:#2563eb">'+DARK_ZONES.reduce(function(a,z){return a+z.est_titik;},0)+'</div><div class="l">Est. Titik PJU</div></div>'+
-      '</div>'+
-      '<button class="btn btn-navy btn-full" style="margin-bottom:10px" onclick="toggleDarkZones(document.getElementById(\'mf-gelap\'));closePanel()">Tampilkan Zona Gelap di Peta</button>'+
-      DARK_ZONES.map(function(z){
-        var bc=z.prioritas==='tinggi'?'c-red':z.prioritas==='sedang'?'c-orange':'';
-        var bl=z.prioritas==='tinggi'?'b-red':z.prioritas==='sedang'?'b-orange':'b-gray';
-        return '<div class="card '+bc+'">'+
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px">'+
-            '<h4>'+z.nama+'</h4><span class="badge '+bl+'">'+z.prioritas+'</span>'+
-          '</div>'+
-          '<p>Kec. '+z.kec+' &bull; '+z.warga.toLocaleString('id-ID')+' warga &bull; Est. '+z.est_titik+' titik PJU</p>'+
-          '<p style="margin-top:3px">'+z.alasan+'</p>'+
-          '<div class="cfoot">'+
-            '<button class="btn btn-navy btn-sm" onclick="flyTo('+z.lat+','+z.lng+')">Lihat Peta</button>'+
-            '<button class="btn btn-outline btn-sm" onclick="openPanel(\'pasang\')">Buat Pengajuan</button>'+
-          '</div>'+
-        '</div>';
-      }).join('')+
-    '</div>'+
-
-  '</div>';// /sec
-
-  window.admTab=function(name,btn){
-    document.querySelectorAll('#adm-tabs .tab-btn').forEach(function(b){b.classList.remove('active')});
-    btn.classList.add('active');
-    document.querySelectorAll('[id^="at-"]').forEach(function(t){t.classList.remove('active')});
-    var tc=document.getElementById('at-'+name);
-    if(tc) tc.classList.add('active');
-  };
-}
-
-// ================================================================
-// LOGIN
-// ================================================================
-function openLogin(){document.getElementById('login-bg').classList.add('open');}
-function closeLogin(){document.getElementById('login-bg').classList.remove('open');}
-function setRole(r,btn){
-  loginRole=r;
-  document.querySelectorAll('.lt').forEach(function(b){b.classList.remove('active')});
-  btn.classList.add('active');
-}
-function doLogin(){
-  var u=document.getElementById('lu').value.trim();
-  var p=document.getElementById('lp').value;
-  var info=document.getElementById('linfo');
-  if(!u||!p){showToast('Isi username dan password');return;}
-  if(u==='admin'&&p==='sipju2025'){
-    isLoggedIn=true;
-    loggedUser={
-      name:loginRole==='pln'?'Admin PLN Indramayu':'Admin Dinas PUPR',
-      role:loginRole==='pln'?'PLN ULP Indramayu':'Dinas PUPR Kab. Indramayu',
-      av:loginRole==='pln'?'PLN':'PU',type:loginRole
-    };
-    closeLogin();
-    var chip=document.getElementById('user-chip');
-    chip.style.display='flex';
-    document.getElementById('uc-av').textContent=loggedUser.av;
-    document.getElementById('uc-av').style.background=loginRole==='pln'?'#2563eb':'#16a34a';
-    document.getElementById('uc-name').textContent=loggedUser.name;
-    document.getElementById('btn-login').style.display='none';
-    document.getElementById('nb-tagpju').style.display='';
-    document.getElementById('nb-tagmeter').style.display='';
-    showToast('Login berhasil! Selamat datang, '+loggedUser.name);
-    openPanel('admin');
-  } else {
-    info.className='alert al-danger';
-    info.textContent='Username atau password salah. Demo: admin / sipju2025';
-  }
-}
-function doLogout(){
-  isLoggedIn=false;loggedUser=null;
-  document.getElementById('user-chip').style.display='none';
-  document.getElementById('nb-tagpju').style.display='none';
-  document.getElementById('nb-tagmeter').style.display='none';
-  document.getElementById('btn-login').style.display='block';
-  showToast('Logout berhasil');
-  openPanel('home');
-}
-
-// ================================================================
-// UTILITIES
-// ================================================================
-function handleFiles(input,prevId){
-  var prev=document.getElementById(prevId);
-  if(!prev) return;
-  Array.from(input.files).forEach(function(f){
-    var r=new FileReader();
-    r.onload=function(e){
-      var item=document.createElement('div');
-      item.className='pp-item';
-      item.innerHTML='<img src="'+e.target.result+'" alt="foto"><button onclick="this.parentElement.remove()">&#10005;</button>';
-      prev.appendChild(item);
-    };
-    r.readAsDataURL(f);
-  });
-}
-function getGPS(latId,lngId,btn){
-  if(!navigator.geolocation){showToast('GPS tidak tersedia');return;}
-  var orig=btn.textContent; btn.textContent='Mengambil lokasi...'; btn.disabled=true;
-  navigator.geolocation.getCurrentPosition(function(pos){
-    var le=document.getElementById(latId), lne=document.getElementById(lngId);
-    if(le) le.value=pos.coords.latitude.toFixed(6);
-    if(lne) lne.value=pos.coords.longitude.toFixed(6);
-    showToast('Koordinat berhasil diambil!');
-    btn.textContent='Lokasi berhasil diambil';
-    btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
-    setTimeout(function(){btn.textContent=orig;btn.style.borderColor='';btn.style.color='';btn.disabled=false;},3000);
-  },function(){showToast('Gagal ambil GPS, isi manual');btn.textContent=orig;btn.disabled=false;},{enableHighAccuracy:true,timeout:10000});
-}
-function openPV(url,cap){
-  document.getElementById('pv-img').src=url;
-  document.getElementById('pv-cap').textContent=cap||'';
-  document.getElementById('pv').classList.add('open');
-}
-function closePV(){document.getElementById('pv').classList.remove('open');}
-var _tt;
-function showToast(msg){
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  clearTimeout(_tt); _tt=setTimeout(function(){t.classList.remove('show');},3500);
-}
-function updateClock(){
-  var d=new Date();
-  document.getElementById('clock').textContent=d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-}
-setInterval(updateClock,1000); updateClock();
-document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePV();closeLogin();}});
-document.getElementById('pv').addEventListener('click',function(e){if(e.target===this)closePV();});
-document.getElementById('login-bg').addEventListener('click',function(e){if(e.target===this)closeLogin();});
-
-// ================================================================
-// RENDER: TAG PJU (Upload foto & tagging titik PJU) - Admin Only
-// ================================================================
-var taggedPJUCount=0;
-
-function renderTagPJU(el){
-  if(!isLoggedIn){
-    el.innerHTML='<div class="sec"><div class="alert al-warn">Halaman ini memerlukan login admin. Silakan login terlebih dahulu.</div><button class="btn btn-navy btn-full" onclick="openLogin()">Login</button></div>';
-    return;
-  }
-  // Build gardu options from CABLE_LINES
-  var garduOpts=CABLE_LINES.map(function(c){
-    return '<option value="'+c.gardu+'">'+c.gardu+' ('+c.n_pju+' PJU)'+(c.status==='anomali'?' ⚠️ ANOMALI':'')+'</option>';
-  }).join('');
-
-  el.innerHTML=
-  '<div class="sec">'+
-    '<div class="alert al-info">Upload foto PJU di lapangan, tandai GPS, pilih induk KWH Meter (gardu), dan data langsung tersimpan ke peta.</div>'+
-    
-    '<div class="fg"><label>📸 Foto PJU <span style="color:#dc2626">*</span></label>'+
-      '<div class="upload-zone" id="uz-pju" onclick="document.getElementById(\'pju-file\').click()">'+
-        '<div class="uz-icon">📷</div>'+
-        '<div class="uz-text">Klik untuk foto / upload gambar PJU</div>'+
-        '<div class="uz-hint">JPG, PNG &bull; dari kamera atau galeri</div>'+
-        '<input type="file" id="pju-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-pju\')">'+
-      '</div>'+
-    '</div>'+
-
-    '<div class="fg"><label>📍 Lokasi GPS <span style="color:#dc2626">*</span></label>'+
-      '<div class="frow"><div class="fg"><label style="font-size:10px">Lat</label><input class="fc" id="tp-lat" placeholder="-6.xxxx"></div>'+
-      '<div class="fg"><label style="font-size:10px">Lng</label><input class="fc" id="tp-lng" placeholder="108.xxxx"></div></div>'+
-      '<button class="gps-btn" onclick="getGPS(\'tp-lat\',\'tp-lng\',this)">📱 Ambil Lokasi GPS Otomatis</button>'+
-    '</div>'+
-
-    '<div class="fg"><label>⚡ Induk KWH Meter / Gardu <span style="color:#dc2626">*</span></label>'+
-      '<select class="fc" id="tp-gardu" onchange="showGarduInfo(this.value)">'+
-        '<option value="">-- Auto-detect / Pilih Gardu --</option>'+
-        garduOpts+
-      '</select>'+
-    '</div>'+
-
-    '<div class="meter-info-box" id="tp-gardu-info"></div>'+
-
-    '<div class="div"></div>'+
-    '<div style="font-size:10px;color:var(--gray);font-weight:700;margin-bottom:8px">DATA OPSIONAL (bisa diisi nanti)</div>'+
-
-    '<div class="frow">'+
-      '<div class="fg"><label>Jenis Lampu</label><select class="fc" id="tp-jenis"><option value="">--</option><option>LED</option><option>Sodium HPS</option><option>Solar Panel</option><option>Mercury</option></select></div>'+
-      '<div class="fg"><label>Daya (W)</label><input class="fc" type="number" id="tp-daya" placeholder="cth: 900"></div>'+
-    '</div>'+
-    '<div class="frow">'+
-      '<div class="fg"><label>Merk</label><input class="fc" id="tp-merk" placeholder="cth: SANXING"></div>'+
-      '<div class="fg"><label>Tiang / Kode</label><input class="fc" id="tp-tiang" placeholder="cth: 104"></div>'+
-    '</div>'+
-    '<div class="fg"><label>Catatan</label><textarea class="fc" id="tp-note" style="min-height:50px" placeholder="Catatan opsional..."></textarea></div>'+
-
-    '<button class="btn btn-green btn-full" style="padding:11px;font-size:13px" onclick="submitTagPJU()">📸 Upload & Simpan Tagging PJU</button>'+
-
-    '<div id="tp-results"></div>'+
-
-    '<div class="div"></div>'+
-    '<div class="sec-title">Statistik Pendataan Hari Ini</div>'+
-    '<div class="stat-row two">'+
-      '<div class="stat-box"><div class="n" style="color:#2563eb" id="tp-count">'+taggedPJUCount+'</div><div class="l">PJU Di-tag Hari Ini</div></div>'+
-      '<div class="stat-box"><div class="n" style="color:#16a34a">'+STATS.total+'</div><div class="l">Total Terdata</div></div>'+
-    '</div>'+
-  '</div>';
-}
-
-function showGarduInfo(gardu){
-  var box=document.getElementById('tp-gardu-info');
-  if(!gardu){box.className='meter-info-box';return;}
-  var cl=CABLE_LINES.find(function(c){return c.gardu===gardu;});
-  if(!cl){box.className='meter-info-box';return;}
-  box.className='meter-info-box show';
-  var pjus=PJU_DATA.filter(function(d){return d[4]===gardu;});
-  var totalDaya=pjus.reduce(function(a,d){return a+(d[3]||0);},0);
-  var kwhEst=pjus.reduce(function(a,d){return a+(d[11]||0);},0);
-  var isAnomali=cl.status==='anomali';
-  box.innerHTML=
-    '<div style="font-size:11px;font-weight:700;margin-bottom:5px">⚡ Info Gardu: '+gardu+(isAnomali?' <span style="color:#dc2626">⚠️ ANOMALI</span>':'')+'</div>'+
-    '<div class="mi-grid">'+
-      '<div class="mi-item"><div class="mv">'+cl.n_pju+'</div><div class="ml">PJU Terhubung</div></div>'+
-      '<div class="mi-item"><div class="mv">'+(totalDaya/1000).toFixed(1)+'kW</div><div class="ml">Total Daya</div></div>'+
-      '<div class="mi-item"><div class="mv">'+kwhEst.toFixed(1)+'</div><div class="ml">kWh/Hari</div></div>'+
-    '</div>'+
-    '<div style="font-size:10px;color:var(--gray);margin-top:5px">PJU baru ini akan menjadi PJU ke-'+(cl.n_pju+1)+' di gardu ini</div>';
-}
-
-function submitTagPJU(){
-  var lat=document.getElementById('tp-lat').value;
-  var lng=document.getElementById('tp-lng').value;
-  var gardu=document.getElementById('tp-gardu').value;
-  if(!lat||!lng){showToast('Lokasi GPS wajib diisi!');return;}
-  if(!gardu){showToast('Pilih Induk KWH Meter / Gardu!');return;}
-  var jenis=document.getElementById('tp-jenis').value||'—';
-  var daya=document.getElementById('tp-daya').value||'—';
-  var merk=document.getElementById('tp-merk').value||'—';
-  taggedPJUCount++;
-  var tpCount=document.getElementById('tp-count');
-  if(tpCount) tpCount.textContent=taggedPJUCount;
-  var results=document.getElementById('tp-results');
-  var card=document.createElement('div');
-  card.className='tag-result';
-  card.innerHTML='<h4>✅ PJU Berhasil Di-tag!</h4>'+
-    '<p>📍 '+lat+', '+lng+' | ⚡ Gardu: '+gardu+'<br>💡 '+jenis+' '+daya+'W | 🏷️ '+merk+'<br>🕐 '+new Date().toLocaleString('id-ID')+'</p>';
-  results.prepend(card);
-  showToast('📸 PJU berhasil di-tag ke gardu '+gardu+'!');
-  // Reset
-  document.getElementById('tp-lat').value='';
-  document.getElementById('tp-lng').value='';
-  document.getElementById('tp-gardu').value='';
-  document.getElementById('tp-gardu-info').className='meter-info-box';
-  var uz=document.getElementById('uz-pju');
-  if(uz){uz.classList.remove('has-photo');uz.innerHTML='<div class="uz-icon">📷</div><div class="uz-text">Klik untuk foto / upload gambar PJU</div><div class="uz-hint">JPG, PNG &bull; dari kamera atau galeri</div><input type="file" id="pju-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-pju\')">';}
-}
-
-// ================================================================
-// RENDER: TAG METER (Upload foto & tagging KWH Meter) - Admin Only
-// ================================================================
-function renderTagMeter(el){
-  if(!isLoggedIn){
-    el.innerHTML='<div class="sec"><div class="alert al-warn">Halaman ini memerlukan login admin.</div><button class="btn btn-navy btn-full" onclick="openLogin()">Login</button></div>';
-    return;
-  }
-  el.innerHTML=
-  '<div class="sec">'+
-    '<div class="alert al-info">Upload foto KWH Meter PLN di lapangan. Data akan muncul di peta sebagai induk meter yang menghubungkan ke titik-titik PJU.</div>'+
-
-    '<div class="fg"><label>📸 Foto KWH Meter <span style="color:#dc2626">*</span></label>'+
-      '<div class="upload-zone" id="uz-meter" onclick="document.getElementById(\'meter-file\').click()">'+
-        '<div class="uz-icon">⚡</div>'+
-        '<div class="uz-text">Klik untuk foto KWH Meter</div>'+
-        '<div class="uz-hint">Pastikan nomor PLN & stand meter terbaca jelas</div>'+
-        '<input type="file" id="meter-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-meter\')">'+
-      '</div>'+
-    '</div>'+
-
-    '<div class="fg"><label>📍 Lokasi GPS <span style="color:#dc2626">*</span></label>'+
-      '<div class="frow"><div class="fg"><label style="font-size:10px">Lat</label><input class="fc" id="tm-lat" placeholder="-6.xxxx"></div>'+
-      '<div class="fg"><label style="font-size:10px">Lng</label><input class="fc" id="tm-lng" placeholder="108.xxxx"></div></div>'+
-      '<button class="gps-btn" onclick="getGPS(\'tm-lat\',\'tm-lng\',this)">📱 Ambil Lokasi GPS Otomatis</button>'+
-    '</div>'+
-
-    '<div class="fg"><label>Nama Gardu / ID Meter <span style="color:#dc2626">*</span></label><input class="fc" id="tm-gardu" placeholder="cth: BUGC atau MTR-2025-343"></div>'+
-    '<div class="fg"><label>No. PLN / ID Pelanggan</label><input class="fc" id="tm-pln" placeholder="cth: 541721001234"></div>'+
-    '<div class="frow">'+
-      '<div class="fg"><label>Lokasi / Jalan</label><input class="fc" id="tm-jalan" placeholder="cth: Jl. Sudirman"></div>'+
-      '<div class="fg"><label>Kecamatan</label><select class="fc" id="tm-kec"><option value="">--</option><option>Indramayu</option><option>Sindang</option><option>Jatibarang</option><option>Lohbener</option><option>Haurgeulis</option><option>Kandanghaur</option><option>Lainnya</option></select></div>'+
-    '</div>'+
-    '<div class="frow">'+
-      '<div class="fg"><label>Daya Tersambung (VA)</label><input class="fc" type="number" id="tm-va" placeholder="cth: 5500"></div>'+
-      '<div class="fg"><label>Stand Meter (kWh)</label><input class="fc" type="number" id="tm-stand" placeholder="cth: 12500"></div>'+
-    '</div>'+
-    '<div class="fg"><label>Catatan</label><textarea class="fc" id="tm-note" style="min-height:50px" placeholder="Catatan..."></textarea></div>'+
-
-    '<button class="btn btn-gold btn-full" style="padding:11px;font-size:13px" onclick="submitTagMeter()">⚡ Upload & Simpan KWH Meter</button>'+
-
-    '<div id="tm-results"></div>'+
-
-    '<div class="div"></div>'+
-    '<div class="sec-title">📋 Panduan Upload Meter</div>'+
-    '<div style="font-size:11px;line-height:1.8;color:var(--gray)">'+
-      '1️⃣ Foto close-up &mdash; pastikan nomor PLN terbaca jelas<br>'+
-      '2️⃣ Ambil GPS &mdash; pastikan di dekat lokasi meter<br>'+
-      '3️⃣ Isi ID Gardu & No. PLN (wajib)<br>'+
-      '4️⃣ Submit &mdash; data langsung masuk ke peta jaringan PJU<br>'+
-      '<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:7px;margin-top:6px;font-size:10px;color:#92400e">'+
-        '💡 Setelah upload meter, lanjutkan upload titik PJU yang terhubung via menu <strong>Tag PJU</strong>.'+
-      '</div>'+
-    '</div>'+
-  '</div>';
-}
-
-function submitTagMeter(){
-  var lat=document.getElementById('tm-lat').value;
-  var lng=document.getElementById('tm-lng').value;
-  var gardu=document.getElementById('tm-gardu').value;
-  if(!lat||!lng){showToast('Lokasi GPS wajib diisi!');return;}
-  if(!gardu){showToast('ID Gardu/Meter wajib diisi!');return;}
-  var pln=document.getElementById('tm-pln').value||'—';
-  var jalan=document.getElementById('tm-jalan').value||'—';
-  var results=document.getElementById('tm-results');
-  var card=document.createElement('div');
-  card.className='tag-result';
-  card.style.background='#fffbeb';card.style.borderColor='#fde68a';
-  card.innerHTML='<h4 style="color:#92400e">⚡ KWH Meter Tersimpan!</h4>'+
-    '<p style="color:#a16207">Gardu: '+gardu+' | PLN: '+pln+'<br>📍 '+lat+', '+lng+' | '+jalan+'<br>🕐 '+new Date().toLocaleString('id-ID')+'</p>';
-  results.prepend(card);
-  showToast('⚡ KWH Meter '+gardu+' berhasil di-tag!');
-  // Reset
-  document.getElementById('tm-lat').value='';document.getElementById('tm-lng').value='';
-  document.getElementById('tm-gardu').value='';document.getElementById('tm-pln').value='';
-  var uz=document.getElementById('uz-meter');
-  if(uz){uz.classList.remove('has-photo');uz.innerHTML='<div class="uz-icon">⚡</div><div class="uz-text">Klik untuk foto KWH Meter</div><div class="uz-hint">Pastikan nomor PLN & stand meter terbaca jelas</div><input type="file" id="meter-file" accept="image/*" capture="environment" onchange="previewUpload(this,\'uz-meter\')">';}
-}
-
-// ================================================================
-// PHOTO PREVIEW FOR UPLOAD ZONES
-// ================================================================
-window.previewUpload=function(input,zoneId){
-  var file=input.files[0];
-  if(!file) return;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var zone=document.getElementById(zoneId);
-    if(zone){
-      zone.classList.add('has-photo');
-      zone.innerHTML='<img src="'+e.target.result+'" alt="Preview">'+
-        '<div style="font-size:10px;color:#16a34a;margin-top:4px">✅ Foto berhasil dipilih</div>'+
-        '<input type="file" accept="image/*" capture="environment" onchange="previewUpload(this,\''+zoneId+'\')">';
-    }
-  };
-  reader.readAsDataURL(file);
-};
-
-// ================================================================
-// HIGHLIGHT GARDU PJU on map
-// ================================================================
-window.highlightGarduPJU=function(garduName){
-  map.closePopup();
-  // Flash PJU markers belonging to this gardu
-  var cl=CABLE_LINES.find(function(c){return c.gardu===garduName;});
-  if(!cl) return;
-  // Fly to gardu center
-  map.flyTo(cl.center,15,{duration:1});
-  // Enable cables if not visible
-  if(!showCables){
-    showCables=true;
-    cableLayer.addTo(map);
-    var btn=document.getElementById('mf-kabel');
-    if(btn) btn.classList.add('active');
-  }
-  // Temporarily add highlighted markers
-  var highlights=L.layerGroup();
-  cl.pju_ids.forEach(function(pid){
-    var pju=PJU_DATA.find(function(d){return d[0]===pid;});
-    if(pju&&pju[1]&&pju[2]){
-      L.circleMarker([pju[1],pju[2]],{
-        radius:10,color:'#f5a623',fillColor:'#f5a623',fillOpacity:0.5,weight:2
-      }).addTo(highlights);
-    }
-  });
-  highlights.addTo(map);
-  showToast('🔍 '+cl.n_pju+' PJU dari gardu '+garduName+' disorot');
-  setTimeout(function(){map.removeLayer(highlights);},5000);
-};
-
-// ================================================================
-// INIT
-// ================================================================
-function renderTiket(el){
-  el.innerHTML=
-  '<div class="sec">'+
-    '<div class="alert al-info">Masukkan nomor tiket laporan Anda untuk melihat status terkini. Format: LAP-XXXX</div>'+
-    '<div class="fg">'+
-      '<label>🎫 Nomor Tiket</label>'+
-      '<div style="display:flex;gap:6px">'+
-        '<input type="text" class="fc" id="cek-tiket-input" placeholder="Contoh: LAP-0047" style="text-transform:uppercase;font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:1px">'+
-        '<button class="btn btn-navy" onclick="cekTiket()" style="flex-shrink:0">Cek</button>'+
-      '</div>'+
-    '</div>'+
-    '<div id="tiket-result"></div>'+
-    '<div class="div"></div>'+
-    '<div class="sec-title">Laporan Terbaru Anda</div>'+
-    '<div style="font-size:11px;color:#64748b;margin-bottom:10px">Laporan yang baru saja dikirim dari sesi ini:</div>'+
-    (userReports.slice(0,3).map(function(r){
-      var bc={baru:'c-red',proses:'c-orange',selesai:'c-green'}[r.status]||'';
-      var bl={baru:'b-red',proses:'b-orange',selesai:'b-green'}[r.status]||'b-gray';
-      var icon={baru:'🔴',proses:'⏳',selesai:'✅'}[r.status]||'📋';
-      var prog={baru:15,proses:55,selesai:100}[r.status]||0;
-      var progColor={baru:'#dc2626',proses:'#f59e0b',selesai:'#16a34a'}[r.status]||'#64748b';
-      return '<div class="card '+bc+'" style="margin-bottom:8px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">'+
-          '<div>'+
-            '<span style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;font-weight:700">'+r.id+'</span>'+
-            '<span class="badge '+bl+'" style="margin-left:5px">'+icon+' '+({baru:'Baru',proses:'Diproses',selesai:'Selesai'}[r.status]||r.status)+'</span>'+
-          '</div>'+
-        '</div>'+
-        '<div style="font-size:12px;font-weight:600;margin:4px 0">'+r.masalah+'</div>'+
-        '<div style="font-size:11px;color:#64748b">📍 '+r.lokasi+'</div>'+
-        '<div style="font-size:10px;color:#94a3b8;margin-top:2px">👤 '+r.pelapor+' &bull; 🕐 '+r.waktu+'</div>'+
-        '<div style="margin-top:8px">'+
-          '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:3px">'+
-            '<span>Progress Penanganan</span><span style="color:'+progColor+'">'+prog+'%</span>'+
-          '</div>'+
-          '<div style="height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden">'+
-            '<div style="width:'+prog+'%;height:100%;background:'+progColor+';border-radius:3px;transition:width 1s ease"></div>'+
-          '</div>'+
-        '</div>'+
-        '<div class="cfoot" style="margin-top:8px">'+
-          '<button class="btn btn-outline btn-sm" onclick="flyTo('+r.lat+','+r.lng+')">📍 Lihat Peta</button>'+
-          (r.status!=='selesai'?'<button class="btn btn-outline btn-sm" onclick="showToast(\'Notifikasi WhatsApp akan dikirim ke nomor terdaftar\')">📲 Update via WA</button>':'<span style="font-size:10px;color:#16a34a;font-weight:700">✅ Selesai ditangani</span>')+
-        '</div>'+
-      '</div>';
-    }).join('')||'<div style="text-align:center;padding:20px;color:#94a3b8;font-size:11px">Belum ada laporan di sesi ini</div>')+
-    '<div class="div"></div>'+
-    '<div style="background:var(--bg);border-radius:8px;padding:12px;border:1px solid var(--border)">'+
-      '<div style="font-size:11px;font-weight:700;margin-bottom:8px">📞 Kontak Pengaduan Langsung</div>'+
-      '<div style="font-size:11px;color:#64748b;line-height:2">'+
-        '☎️ Dinas PUPR: <strong>(0234) 272202</strong><br>'+
-        '📲 WhatsApp: <strong>0811-9xxx-xxxx</strong><br>'+
-        '📧 Email: <strong>pupr@indramayukab.go.id</strong><br>'+
-        '🕐 Jam kerja: Senin–Jumat, 08.00–16.00 WIB'+
-      '</div>'+
-    '</div>'+
-  '</div>';
-}
-
-window.cekTiket = function(){
-  var input = (document.getElementById('cek-tiket-input')||{}).value||'';
-  var q = input.trim().toUpperCase();
-  var result = document.getElementById('tiket-result');
-  if(!q){ showToast('Masukkan nomor tiket terlebih dahulu'); return; }
-  var found = userReports.find(function(r){ return r.id.toUpperCase()===q; });
-  if(!found){
-    result.innerHTML=
-      '<div class="alert al-danger" style="margin-top:10px">'+
-        '❌ Tiket <strong>'+q+'</strong> tidak ditemukan. Periksa kembali nomor tiket Anda.'+
-      '</div>';
-    return;
-  }
-  var prog={baru:15,proses:55,selesai:100}[found.status]||0;
-  var progColor={baru:'#dc2626',proses:'#f59e0b',selesai:'#16a34a'}[found.status]||'#64748b';
-  var steps=[
-    {label:'Laporan Diterima',done:true},
-    {label:'Verifikasi Lapangan',done:found.status==='proses'||found.status==='selesai'},
-    {label:'Perbaikan Dimulai',done:found.status==='proses'||found.status==='selesai'},
-    {label:'Selesai',done:found.status==='selesai'},
-  ];
-  result.innerHTML=
-    '<div class="card c-'+(found.status==='selesai'?'green':found.status==='proses'?'orange':'red')+'" style="margin-top:10px">'+
-      '<div style="font-size:13px;font-weight:800;margin-bottom:8px">'+
-        '🎫 Tiket: <span style="font-family:monospace">'+found.id+'</span>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-bottom:10px">'+
-        '<div><span style="color:#64748b">Masalah</span><br><strong>'+found.masalah+'</strong></div>'+
-        '<div><span style="color:#64748b">Lokasi</span><br><strong>'+found.lokasi+'</strong></div>'+
-        '<div><span style="color:#64748b">Pelapor</span><br><strong>'+found.pelapor+'</strong></div>'+
-        '<div><span style="color:#64748b">Waktu Lapor</span><br><strong>'+found.waktu+'</strong></div>'+
-      '</div>'+
-      // Progress steps
-      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'+
-        steps.map(function(s,i){
-          var c=s.done?'#16a34a':'#e2e8f0';
-          var tc=s.done?'#16a34a':'#94a3b8';
-          return '<div style="flex:1;text-align:center">'+
-            '<div style="width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 3px">'+(s.done?'✓':(i+1))+'</div>'+
-            '<div style="font-size:9px;color:'+tc+';font-weight:600;line-height:1.2">'+s.label+'</div>'+
-          '</div>';
-        }).join('')+
-      '</div>'+
-      '<div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden;margin-bottom:8px">'+
-        '<div style="width:'+prog+'%;height:100%;background:'+progColor+';border-radius:2px;transition:width 1s ease"></div>'+
-      '</div>'+
-      '<div class="cfoot">'+
-        '<button class="btn btn-navy btn-sm" onclick="flyTo('+found.lat+','+found.lng+')">📍 Lihat di Peta</button>'+
-        '<button class="btn btn-outline btn-sm" onclick="showToast(\'Update status dikirim via WhatsApp\')">📲 Notif WA</button>'+
-      '</div>'+
-    '</div>';
-};
-
-// ================================================================
-// NOTIFIKASI BELL (real-time simulation)
-// ================================================================
-var NOTIFS=[
-  {id:1,icon:'🔴',judul:'Laporan Baru Masuk',desc:'LAP-0047 — Jl. Sudirman No.23',waktu:'Baru saja',baca:false,panel:'laporan'},
-  {id:2,icon:'⚠️',judul:'Anomali Konsumsi Terdeteksi',desc:'Meter MTR-045 melebihi +42%',waktu:'5 menit lalu',baca:false,panel:'admin'},
-  {id:3,icon:'💡',judul:'Laporan Berhasil Diselesaikan',desc:'LAP-0038 — Jl. Pahlawan No.10',waktu:'1 jam lalu',baca:true,panel:'laporan'},
-  {id:4,icon:'🌑',judul:'Zona Gelap Baru Teridentifikasi',desc:'Desa Cemara, Kec. Lohbener',waktu:'2 jam lalu',baca:true,panel:'admin'},
-];
-
-function buildNotifBell(){
-  var unread=NOTIFS.filter(function(n){return !n.baca;}).length;
-  // Inject bell into topbar right
-  var right=document.querySelector('.topbar-right')||document.getElementById('topbar');
-  if(!right) return;
-  var bell=document.createElement('div');
-  bell.style.cssText='position:relative;cursor:pointer;margin-right:4px';
-  bell.innerHTML=
-    '<button onclick="toggleNotifPanel()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">'+
-      '🔔'+
-      (unread>0?'<span id="notif-badge" style="position:absolute;top:-2px;right:-2px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #0f2340">'+unread+'</span>':'')+
-    '</button>'+
-    '<div id="notif-panel" style="display:none;position:absolute;top:40px;right:0;width:280px;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:3000;overflow:hidden;border:1px solid var(--border)">'+
-      '<div style="background:#0f2340;padding:10px 13px;display:flex;justify-content:space-between;align-items:center">'+
-        '<span style="color:#fff;font-size:12px;font-weight:700">🔔 Notifikasi</span>'+
-        '<button onclick="markAllRead()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:10px;cursor:pointer;font-family:inherit">Tandai semua dibaca</button>'+
-      '</div>'+
-      NOTIFS.map(function(n){
-        return '<div onclick="notifClick('+n.id+')" style="padding:10px 13px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;gap:9px;background:'+(n.baca?'#fff':'#f0f9ff')+';transition:background .15s" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\''+(n.baca?'#fff':'#f0f9ff')+'\'">'+
-          '<span style="font-size:18px;flex-shrink:0">'+n.icon+'</span>'+
-          '<div>'+
-            '<div style="font-size:11px;font-weight:700;color:#0f2340">'+(n.baca?'':' &#9679; ')+n.judul+'</div>'+
-            '<div style="font-size:10px;color:#64748b">'+n.desc+'</div>'+
-            '<div style="font-size:10px;color:#94a3b8;margin-top:1px">'+n.waktu+'</div>'+
-          '</div>'+
-        '</div>';
-      }).join('')+
-      '<div style="padding:8px;text-align:center;font-size:11px;color:#2563eb;cursor:pointer" onclick="openPanel(\'laporan\');toggleNotifPanel()">Lihat semua laporan</div>'+
-    '</div>';
-  var btnLogin=document.getElementById('btn-login');
-  if(btnLogin) btnLogin.parentNode.insertBefore(bell,btnLogin);
-}
-
-window.toggleNotifPanel=function(){
-  var p=document.getElementById('notif-panel');
-  if(p) p.style.display=p.style.display==='none'?'block':'none';
-};
-window.markAllRead=function(){
-  NOTIFS.forEach(function(n){n.baca=true;});
-  var badge=document.getElementById('notif-badge');
-  if(badge) badge.style.display='none';
-  buildNotifBell();
-};
-window.notifClick=function(id){
-  var n=NOTIFS.find(function(x){return x.id===id;});
-  if(n){n.baca=true;toggleNotifPanel();openPanel(n.panel);}
-  var badge=document.getElementById('notif-badge');
-  var unread=NOTIFS.filter(function(x){return !x.baca;}).length;
-  if(badge){badge.textContent=unread;if(!unread)badge.style.display='none';}
-};
-
-// Close notif panel on outside click
-document.addEventListener('click',function(e){
-  var p=document.getElementById('notif-panel');
-  if(p&&p.style.display==='block'&&!p.contains(e.target)&&!e.target.closest('[onclick="toggleNotifPanel()"]')){
-    p.style.display='none';
-  }
-});
-
-// Simulate new notif every 45s
-setInterval(function(){
-  var newNotifs=[
-    {id:Date.now(),icon:'🔴',judul:'Laporan PJU Baru',desc:'Laporan masuk dari warga',waktu:'Baru saja',baca:false,panel:'laporan'},
-    {id:Date.now(),icon:'⚡',judul:'Anomali Terdeteksi',desc:'Konsumsi tidak wajar di gardu baru',waktu:'Baru saja',baca:false,panel:'admin'},
-  ];
-  var picked=newNotifs[Math.floor(Math.random()*newNotifs.length)];
-  NOTIFS.unshift(picked);
-  if(NOTIFS.length>8) NOTIFS.pop();
-  buildNotifBell();
-  // Show toast
-  showToast(picked.icon+' '+picked.judul);
-},45000);
-
-// ================================================================
-// EXPORT DATA (CSV download)
-// ================================================================
-window.exportCSV = function(){
-  var headers=['ID','Lat','Lng','Daya (W)','Gardu','No. Meter','Merk','ULP','Tiang','Tahun','Status','kWh Est','kWh Aktual','Anomali Score'];
-  var rows=[headers.join(',')];
-  PJU_DATA.forEach(function(d){
-    rows.push([d[0],d[1],d[2],d[3],d[4],d[5],d[6],d[7],d[8],d[9],d[10],d[11],d[12],d[13]].join(','));
-  });
-  var blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url; a.download='SIPJU_Indramayu_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click(); URL.revokeObjectURL(url);
-  showToast('📊 Data '+PJU_DATA.length+' titik PJU berhasil diexport!');
-};
-
-window.exportLaporan = function(){
-  var headers=['ID Laporan','Lokasi','Masalah','Deskripsi','Pelapor','Waktu','Status'];
-  var rows=[headers.join(',')];
-  userReports.forEach(function(r){
-    rows.push([r.id,'"'+r.lokasi+'"','"'+r.masalah+'"','"'+r.desc+'"',r.pelapor,r.waktu,r.status].join(','));
-  });
-  var blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url; a.download='Laporan_PJU_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click(); URL.revokeObjectURL(url);
-  showToast('📋 '+userReports.length+' laporan berhasil diexport!');
-};
-
-window.addEventListener('load',function(){
-  initMap();
-  openPanel('home');
-  buildNotifBell();
-});
+// ===== UTILS =====
+function showM(m){var el=document.getElementById('modal');el.style.display='flex';document.getElementById('modalMsg').textContent=m}
+window.showM=showM;
+function updateClock(){var d=new Date();var el=document.getElementById('clock');if(el)el.textContent=d.toLocaleString('id-ID',{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
 </script>
 </body>
 </html>
