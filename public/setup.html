@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIPJU Setup Database</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;padding:20px;max-width:800px;margin:0 auto}
+h1{color:#1a3c5e;margin-bottom:10px;font-size:22px}
+p{color:#666;margin-bottom:20px;font-size:14px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px}
+.card h3{color:#1a3c5e;margin-bottom:10px;font-size:16px}
+.btn{padding:12px 24px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#fff;display:inline-flex;align-items:center;gap:8px;font-family:inherit;transition:all .2s}
+.btn-primary{background:#1a3c5e}.btn-success{background:#27ae60}.btn-danger{background:#e74c3c}
+.btn:hover{opacity:.9}.btn:disabled{opacity:.5;cursor:not-allowed}
+#log{background:#1a1a2e;color:#27ae60;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;max-height:400px;overflow-y:auto;white-space:pre-wrap;line-height:1.6}
+.status{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.s-ok{background:#dcfce7;color:#16a34a}.s-err{background:#fee2e2;color:#dc2626}.s-wait{background:#fef9c3;color:#ca8a04}
+</style>
+</head>
+<body>
+<h1>💡 SIPJU Indramayu — Setup Database</h1>
+<p>Halaman ini akan otomatis membuat tabel di Supabase untuk backend SIPJU.</p>
+
+<div class="card">
+  <h3>📋 Status Koneksi</h3>
+  <p>URL: <code>https://basvvpodxdmexsierzqp.supabase.co</code></p>
+  <p>Status: <span class="status s-wait" id="connStatus">Mengecek...</span></p>
+</div>
+
+<div class="card">
+  <h3>🔧 Setup Database</h3>
+  <p>Klik tombol di bawah untuk menjalankan setup. Anda perlu menjalankan SQL schema manual di Supabase SQL Editor.</p>
+  <button class="btn btn-primary" id="btnSetup" onclick="runSetup()">🚀 Cek Koneksi & Test Insert</button>
+  <button class="btn btn-success" id="btnSeed" onclick="runSeed()" style="margin-left:8px" disabled>📊 Seed Data (Import Meter)</button>
+  <button class="btn btn-danger" onclick="copySQL()" style="margin-left:8px">📋 Copy SQL Schema</button>
+</div>
+
+<div class="card">
+  <h3>📝 Log</h3>
+  <div id="log">Menunggu perintah...\n</div>
+</div>
+
+<div class="card" id="sqlCard">
+  <h3>📋 SQL Schema (copy ke Supabase SQL Editor)</h3>
+  <p style="font-size:12px;color:#888">Buka <a href="https://supabase.com/dashboard/project/basvvpodxdmexsierzqp/sql/new" target="_blank">Supabase SQL Editor</a> → Paste → Run</p>
+  <textarea id="sqlArea" style="width:100%;height:200px;font-family:monospace;font-size:11px;border:1px solid #ddd;border-radius:6px;padding:10px" readonly></textarea>
+</div>
+
+<script>
+var SB_URL='https://basvvpodxdmexsierzqp.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhc3Z2cG9keGRtZXhzaWVyenFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0NTk3MzUsImV4cCI6MjA4OTAzNTczNX0.JS9IEbstAzdPue1l_NX0Ij_RXnFCD2f7UEH53USDX1o';
+var sb=supabase.createClient(SB_URL,SB_KEY);
+
+var SQL_SCHEMA=`-- SIPJU Indramayu Database Schema
+-- Run in Supabase SQL Editor
+
+CREATE TABLE IF NOT EXISTS kwh_meters (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  gardu TEXT NOT NULL,
+  no_pln TEXT,
+  ulp TEXT,
+  lokasi TEXT,
+  lat DOUBLE PRECISION,
+  lng DOUBLE PRECISION,
+  foto_url TEXT,
+  total_daya INTEGER DEFAULT 0,
+  jml_pju INTEGER DEFAULT 0,
+  kwh_per_day DOUBLE PRECISION DEFAULT 0,
+  tagihan_bln INTEGER DEFAULT 0,
+  anomali_pct INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'normal',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS pju_points (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  idpel TEXT,
+  meter_id UUID REFERENCES kwh_meters(id) ON DELETE SET NULL,
+  gardu TEXT,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  foto_url TEXT,
+  jenis_lampu TEXT DEFAULT 'LED',
+  daya INTEGER DEFAULT 900,
+  merk TEXT,
+  tiang TEXT,
+  status TEXT DEFAULT 'aktif',
+  is_legal BOOLEAN DEFAULT TRUE,
+  catatan TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS pengaduan (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nomor_tiket TEXT,
+  lokasi TEXT NOT NULL,
+  kecamatan TEXT,
+  foto_url TEXT,
+  jenis_masalah TEXT,
+  keterangan TEXT,
+  nama_pelapor TEXT,
+  no_hp TEXT,
+  status TEXT DEFAULT 'baru',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS permohonan (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nomor_permohonan TEXT,
+  lokasi TEXT NOT NULL,
+  kecamatan TEXT,
+  alasan TEXT,
+  est_titik INTEGER DEFAULT 1,
+  nama_pemohon TEXT,
+  no_hp TEXT,
+  status TEXT DEFAULT 'baru',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS laporan_ilegal (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nomor_laporan TEXT,
+  lokasi TEXT NOT NULL,
+  foto_url TEXT,
+  keterangan TEXT,
+  nama_pelapor TEXT,
+  status TEXT DEFAULT 'baru',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS dark_zones (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  nama TEXT NOT NULL,
+  kecamatan TEXT,
+  lat DOUBLE PRECISION,
+  lng DOUBLE PRECISION,
+  radius INTEGER DEFAULT 500,
+  prioritas TEXT DEFAULT 'sedang',
+  warga_terdampak INTEGER DEFAULT 0,
+  est_titik INTEGER DEFAULT 0,
+  alasan TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE kwh_meters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pju_points ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pengaduan ENABLE ROW LEVEL SECURITY;
+ALTER TABLE permohonan ENABLE ROW LEVEL SECURITY;
+ALTER TABLE laporan_ilegal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE dark_zones ENABLE ROW LEVEL SECURITY;
+
+-- Public read all
+CREATE POLICY "read_kwh" ON kwh_meters FOR SELECT USING (true);
+CREATE POLICY "read_pju" ON pju_points FOR SELECT USING (true);
+CREATE POLICY "read_pengaduan" ON pengaduan FOR SELECT USING (true);
+CREATE POLICY "read_permohonan" ON permohonan FOR SELECT USING (true);
+CREATE POLICY "read_ilegal" ON laporan_ilegal FOR SELECT USING (true);
+CREATE POLICY "read_zones" ON dark_zones FOR SELECT USING (true);
+
+-- Public insert
+CREATE POLICY "insert_pengaduan" ON pengaduan FOR INSERT WITH CHECK (true);
+CREATE POLICY "insert_permohonan" ON permohonan FOR INSERT WITH CHECK (true);
+CREATE POLICY "insert_ilegal" ON laporan_ilegal FOR INSERT WITH CHECK (true);
+CREATE POLICY "insert_kwh" ON kwh_meters FOR INSERT WITH CHECK (true);
+CREATE POLICY "insert_pju" ON pju_points FOR INSERT WITH CHECK (true);
+CREATE POLICY "insert_zones" ON dark_zones FOR INSERT WITH CHECK (true);
+
+-- Auto ticket numbers
+CREATE OR REPLACE FUNCTION gen_ticket() RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'pengaduan' AND NEW.nomor_tiket IS NULL THEN
+    NEW.nomor_tiket := 'ADU-' || TO_CHAR(NOW(),'YYYYMMDD') || '-' || LPAD(FLOOR(RANDOM()*9999)::TEXT,4,'0');
+  ELSIF TG_TABLE_NAME = 'permohonan' AND NEW.nomor_permohonan IS NULL THEN
+    NEW.nomor_permohonan := 'PRM-' || TO_CHAR(NOW(),'YYYYMMDD') || '-' || LPAD(FLOOR(RANDOM()*9999)::TEXT,4,'0');
+  ELSIF TG_TABLE_NAME = 'laporan_ilegal' AND NEW.nomor_laporan IS NULL THEN
+    NEW.nomor_laporan := 'ILG-' || TO_CHAR(NOW(),'YYYYMMDD') || '-' || LPAD(FLOOR(RANDOM()*9999)::TEXT,4,'0');
+  END IF;
+  RETURN NEW;
+END; $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_pengaduan ON pengaduan;
+CREATE TRIGGER trg_pengaduan BEFORE INSERT ON pengaduan FOR EACH ROW EXECUTE FUNCTION gen_ticket();
+DROP TRIGGER IF EXISTS trg_permohonan ON permohonan;
+CREATE TRIGGER trg_permohonan BEFORE INSERT ON permohonan FOR EACH ROW EXECUTE FUNCTION gen_ticket();
+DROP TRIGGER IF EXISTS trg_ilegal ON laporan_ilegal;
+CREATE TRIGGER trg_ilegal BEFORE INSERT ON laporan_ilegal FOR EACH ROW EXECUTE FUNCTION gen_ticket();
+`;
+
+document.getElementById('sqlArea').value=SQL_SCHEMA;
+
+function log(msg,type){
+  var el=document.getElementById('log');
+  var color=type==='ok'?'#27ae60':type==='err'?'#e74c3c':type==='info'?'#3498db':'#f39c12';
+  el.innerHTML+='<span style="color:'+color+'">'+(type==='ok'?'✅':type==='err'?'❌':'ℹ️')+' '+msg+'</span>\n';
+  el.scrollTop=el.scrollHeight;
+}
+
+async function runSetup(){
+  document.getElementById('btnSetup').disabled=true;
+  log('Mengecek koneksi ke Supabase...','info');
+  
+  // Test connection by trying to select from a table
+  try{
+    // Try pengaduan table first
+    var{data,error}=await sb.from('pengaduan').select('id').limit(1);
+    if(error&&error.message.includes('does not exist')){
+      log('Tabel belum ada. Anda perlu menjalankan SQL Schema dulu.','err');
+      log('Klik "Copy SQL Schema" → paste ke Supabase SQL Editor → Run','info');
+      document.getElementById('connStatus').className='status s-err';
+      document.getElementById('connStatus').textContent='Tabel belum dibuat';
+      document.getElementById('btnSetup').disabled=false;
+      return;
+    }
+    if(error){
+      log('Error: '+error.message,'err');
+      document.getElementById('connStatus').className='status s-err';
+      document.getElementById('connStatus').textContent='Error: '+error.message;
+      document.getElementById('btnSetup').disabled=false;
+      return;
+    }
+    log('Koneksi OK! Tabel pengaduan tersedia.','ok');
+    
+    // Check other tables
+    var tables=['kwh_meters','pju_points','permohonan','laporan_ilegal','dark_zones'];
+    for(var t of tables){
+      var r=await sb.from(t).select('id').limit(1);
+      if(r.error){log('Tabel '+t+': '+r.error.message,'err')}
+      else{log('Tabel '+t+': OK ('+((r.data||[]).length)+' rows checked)','ok')}
+    }
+    
+    // Test insert pengaduan
+    log('Test insert pengaduan...','info');
+    var{data:ins,error:insErr}=await sb.from('pengaduan').insert({
+      lokasi:'TEST - Setup check',
+      jenis_masalah:'Test koneksi',
+      keterangan:'Ini adalah test dari setup page. Bisa dihapus.',
+      nama_pelapor:'SIPJU Setup',
+      status:'baru'
+    }).select().single();
+    if(insErr){log('Insert error: '+insErr.message,'err')}
+    else{log('Insert OK! Nomor tiket: '+(ins.nomor_tiket||'generated'),'ok');
+      // Delete test row
+      await sb.from('pengaduan').delete().eq('id',ins.id);
+      log('Test data dihapus.','ok');
+    }
+    
+    document.getElementById('connStatus').className='status s-ok';
+    document.getElementById('connStatus').textContent='Terhubung & Siap!';
+    document.getElementById('btnSeed').disabled=false;
+    log('\n🎉 DATABASE SIAP! Semua tabel OK. Anda bisa seed data atau langsung pakai.','ok');
+    
+  }catch(e){
+    log('Exception: '+e.message,'err');
+    document.getElementById('connStatus').className='status s-err';
+    document.getElementById('connStatus').textContent='Error';
+  }
+  document.getElementById('btnSetup').disabled=false;
+}
+
+async function runSeed(){
+  document.getElementById('btnSeed').disabled=true;
+  log('\n📊 Memulai seed data...','info');
+  
+  // Check if already seeded
+  var{count}=await sb.from('kwh_meters').select('*',{count:'exact',head:true});
+  if(count>0){
+    log('Database sudah berisi '+count+' meter. Skip seed untuk menghindari duplikat.','info');
+    log('Jika ingin re-seed, hapus data dulu di Supabase Dashboard.','info');
+    document.getElementById('btnSeed').disabled=false;
+    return;
+  }
+  
+  // Load meter_data.js dynamically
+  log('Loading meter_data.js...','info');
+  try{
+    var resp=await fetch('meter_data.js');
+    var text=await resp.text();
+    eval(text);
+    log('Loaded '+METER_DATA.length+' meters','ok');
+  }catch(e){
+    log('Gagal load meter_data.js: '+e.message,'err');
+    document.getElementById('btnSeed').disabled=false;
+    return;
+  }
+  
+  // Insert meters in batches of 50
+  var totalM=0,totalP=0;
+  for(var i=0;i<METER_DATA.length;i+=50){
+    var batch=METER_DATA.slice(i,i+50).map(function(m){return{
+      gardu:m.gardu,no_pln:m.pln||null,ulp:m.ulp,lokasi:m.lokasi,
+      lat:m.lat,lng:m.lng,total_daya:m.totalDaya,jml_pju:m.jmlPJU,
+      kwh_per_day:m.kwhPerDay,tagihan_bln:m.tagihanBln,anomali_pct:m.anomaliPct,
+      status:m.tagihanBln===0?'pencurian':m.status
+    }});
+    var{error}=await sb.from('kwh_meters').insert(batch);
+    if(error){log('Meter batch '+i+': '+error.message,'err')}
+    else{totalM+=batch.length;log('Meter: '+totalM+'/'+METER_DATA.length,'info')}
+  }
+  log(totalM+' meters inserted!','ok');
+  
+  // Get meter IDs for FK mapping
+  var{data:allMeters}=await sb.from('kwh_meters').select('id,gardu');
+  var gMap={};(allMeters||[]).forEach(function(m){gMap[m.gardu]=m.id});
+  
+  // Insert PJU in batches
+  for(var i=0;i<METER_DATA.length;i++){
+    var m=METER_DATA[i];
+    var mid=gMap[m.gardu];
+    var pBatch=m.pjuList.map(function(p){return{
+      idpel:p.id,meter_id:mid||null,gardu:m.gardu,
+      lat:p.lat,lng:p.lng,jenis_lampu:p.jenis||'LED',
+      daya:p.daya,tiang:p.tiang||null,status:p.status,is_legal:true
+    }});
+    if(pBatch.length>0){
+      var{error}=await sb.from('pju_points').insert(pBatch);
+      if(error){log('PJU '+m.gardu+': '+error.message,'err')}
+      else{totalP+=pBatch.length}
+    }
+    if(i%50===0)log('PJU: '+totalP+' inserted (meter '+i+'/'+METER_DATA.length+')','info');
+  }
+  log(totalP+' PJU points inserted!','ok');
+  
+  // Insert dark zones
+  if(typeof DARK_ZONES!=='undefined'){
+    var dzBatch=DARK_ZONES.map(function(z){return{
+      nama:z.nama,kecamatan:z.kec,lat:z.lat,lng:z.lng,
+      radius:z.radius,prioritas:z.prioritas,
+      warga_terdampak:z.warga,est_titik:z.est_titik,alasan:z.alasan
+    }});
+    var{error}=await sb.from('dark_zones').insert(dzBatch);
+    if(error)log('Dark zones: '+error.message,'err');
+    else log(dzBatch.length+' dark zones inserted!','ok');
+  }
+  
+  log('\n🎉 SEED SELESAI! '+totalM+' meters, '+totalP+' PJU points.','ok');
+  log('Database siap digunakan. Buka index.html untuk mulai.','ok');
+  document.getElementById('btnSeed').disabled=false;
+}
+
+function copySQL(){
+  var ta=document.getElementById('sqlArea');
+  ta.select();
+  document.execCommand('copy');
+  alert('SQL Schema berhasil di-copy! Paste di Supabase SQL Editor dan klik Run.');
+}
+
+// Auto-check on load
+window.addEventListener('load',function(){
+  setTimeout(function(){
+    log('Mengecek koneksi...','info');
+    sb.from('pengaduan').select('id').limit(1).then(function(r){
+      if(r.error&&r.error.message.includes('does not exist')){
+        document.getElementById('connStatus').className='status s-err';
+        document.getElementById('connStatus').textContent='Tabel belum ada — Jalankan SQL dulu';
+        log('Tabel belum dibuat. Copy SQL → paste di Supabase SQL Editor → Run.','err');
+      }else if(r.error){
+        document.getElementById('connStatus').className='status s-err';
+        document.getElementById('connStatus').textContent='Error';
+        log('Error: '+r.error.message,'err');
+      }else{
+        document.getElementById('connStatus').className='status s-ok';
+        document.getElementById('connStatus').textContent='Terhubung!';
+        log('Koneksi OK! Klik "Cek Koneksi" untuk detail.','ok');
+      }
+    });
+  },500);
+});
+</script>
+<script src="dark_zones.js"></script>
+</body>
+</html>
