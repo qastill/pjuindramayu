@@ -356,6 +356,7 @@ select.fc{cursor:pointer}
   <div id="topnav">
     <button class="tnav-btn active" id="nb-home" onclick="openPanel('home')">📊 Statistik</button>
     <button class="tnav-btn" id="nb-lapor" onclick="openPanel('lapor')">📸 Lapor PJU</button>
+    <button class="tnav-btn" id="nb-tiket" onclick="openPanel('tiket')">🎫 Cek Tiket</button>
     <button class="tnav-btn" id="nb-pasang" onclick="openPanel('pasang')">💡 Minta Pasang</button>
     <button class="tnav-btn" id="nb-forum" onclick="openPanel('forum')">💬 Forum Warga</button>
   </div>
@@ -813,7 +814,7 @@ function locateUser(){
 // ================================================================
 // PANEL SYSTEM
 // ================================================================
-var PANEL_TITLES={home:'Statistik PJU',lapor:'Lapor PJU Bermasalah',laporan:'Daftar Laporan',pasang:'Minta Pasang PJU',forum:'Forum Warga',admin:'Dashboard Admin'};
+var PANEL_TITLES={home:'Statistik PJU',lapor:'Lapor PJU Bermasalah',tiket:'🎫 Cek Status Laporan',laporan:'Daftar Laporan',pasang:'Minta Pasang PJU',forum:'Forum Warga',admin:'Dashboard Admin'};
 function openPanel(name){
   document.getElementById('panel-title').textContent=PANEL_TITLES[name]||name;
   document.getElementById('panel').classList.add('open');
@@ -822,7 +823,7 @@ function openPanel(name){
   if(nb) nb.classList.add('active');
   var body=document.getElementById('panel-body');
   body.innerHTML='';
-  ({home:renderHome,lapor:renderLapor,laporan:renderLaporan,pasang:renderPasang,forum:renderForum,admin:renderAdmin}[name]||function(){})(body);
+  ({home:renderHome,lapor:renderLapor,tiket:renderTiket,laporan:renderLaporan,pasang:renderPasang,forum:renderForum,admin:renderAdmin}[name]||function(){})(body);
 }
 function closePanel(){
   document.getElementById('panel').classList.remove('open');
@@ -882,9 +883,16 @@ function renderHome(el){
     '<div class="div"></div>'+
     '<div class="sec-title">Layanan Masyarakat</div>'+
     '<div style="display:flex;flex-direction:column;gap:6px">'+
-      '<button class="btn btn-red btn-full" onclick="openPanel(\'lapor\')">Lapor PJU Bermasalah</button>'+
-      '<button class="btn btn-navy btn-full" onclick="openPanel(\'pasang\')">Ajukan Pasang PJU Baru</button>'+
-      '<button class="btn btn-outline btn-full" onclick="openPanel(\'forum\')">Forum Diskusi Warga</button>'+
+      '<button class="btn btn-red btn-full" onclick="openPanel(\'lapor\')">📸 Lapor PJU Bermasalah</button>'+
+      '<button class="btn btn-navy btn-full" onclick="openPanel(\'pasang\')">💡 Ajukan Pasang PJU Baru</button>'+
+      '<button class="btn btn-outline btn-full" onclick="openPanel(\'tiket\')">🎫 Cek Status Laporan</button>'+
+      '<button class="btn btn-outline btn-full" onclick="openPanel(\'forum\')">💬 Forum Diskusi Warga</button>'+
+    '</div>'+
+    '<div class="div"></div>'+
+    '<div class="sec-title">Export Data</div>'+
+    '<div style="display:flex;gap:6px">'+
+      '<button class="btn btn-outline btn-full" onclick="exportCSV()">📊 Export PJU (CSV)</button>'+
+      '<button class="btn btn-outline btn-full" onclick="exportLaporan()">📋 Export Laporan</button>'+
     '</div>'+
   '</div>';
 }
@@ -1146,6 +1154,10 @@ function renderAdmin(el){
 
     // ── Tab: Laporan ──
     '<div id="at-laporan" class="tc active">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+        '<div class="sec-title" style="margin-bottom:0">Laporan Masuk</div>'+
+        '<button class="btn btn-outline btn-sm" onclick="exportLaporan()">📊 Export CSV</button>'+
+      '</div>'+
       '<div class="stat-row">'+
         '<div class="stat-box"><div class="n" style="color:#1e293b">'+userReports.length+'</div><div class="l">Total</div></div>'+
         '<div class="stat-box"><div class="n" style="color:#dc2626">'+userReports.filter(function(r){return r.status==='baru';}).length+'</div><div class="l">Baru</div></div>'+
@@ -1378,9 +1390,238 @@ document.getElementById('login-bg').addEventListener('click',function(e){if(e.ta
 // ================================================================
 // INIT
 // ================================================================
+// ================================================================
+// RENDER: CEK TIKET LAPORAN (Publik)
+// ================================================================
+function renderTiket(el){
+  el.innerHTML=
+  '<div class="sec">'+
+    '<div class="alert al-info">Masukkan nomor tiket laporan Anda untuk melihat status terkini. Format: LAP-XXXX</div>'+
+    '<div class="fg">'+
+      '<label>🎫 Nomor Tiket</label>'+
+      '<div style="display:flex;gap:6px">'+
+        '<input type="text" class="fc" id="cek-tiket-input" placeholder="Contoh: LAP-0047" style="text-transform:uppercase;font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:1px">'+
+        '<button class="btn btn-navy" onclick="cekTiket()" style="flex-shrink:0">Cek</button>'+
+      '</div>'+
+    '</div>'+
+    '<div id="tiket-result"></div>'+
+    '<div class="div"></div>'+
+    '<div class="sec-title">Laporan Terbaru Anda</div>'+
+    '<div style="font-size:11px;color:#64748b;margin-bottom:10px">Laporan yang baru saja dikirim dari sesi ini:</div>'+
+    (userReports.slice(0,3).map(function(r){
+      var bc={baru:'c-red',proses:'c-orange',selesai:'c-green'}[r.status]||'';
+      var bl={baru:'b-red',proses:'b-orange',selesai:'b-green'}[r.status]||'b-gray';
+      var icon={baru:'🔴',proses:'⏳',selesai:'✅'}[r.status]||'📋';
+      var prog={baru:15,proses:55,selesai:100}[r.status]||0;
+      var progColor={baru:'#dc2626',proses:'#f59e0b',selesai:'#16a34a'}[r.status]||'#64748b';
+      return '<div class="card '+bc+'" style="margin-bottom:8px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">'+
+          '<div>'+
+            '<span style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px;font-weight:700">'+r.id+'</span>'+
+            '<span class="badge '+bl+'" style="margin-left:5px">'+icon+' '+({baru:'Baru',proses:'Diproses',selesai:'Selesai'}[r.status]||r.status)+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:12px;font-weight:600;margin:4px 0">'+r.masalah+'</div>'+
+        '<div style="font-size:11px;color:#64748b">📍 '+r.lokasi+'</div>'+
+        '<div style="font-size:10px;color:#94a3b8;margin-top:2px">👤 '+r.pelapor+' &bull; 🕐 '+r.waktu+'</div>'+
+        '<div style="margin-top:8px">'+
+          '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;margin-bottom:3px">'+
+            '<span>Progress Penanganan</span><span style="color:'+progColor+'">'+prog+'%</span>'+
+          '</div>'+
+          '<div style="height:5px;background:#e2e8f0;border-radius:3px;overflow:hidden">'+
+            '<div style="width:'+prog+'%;height:100%;background:'+progColor+';border-radius:3px;transition:width 1s ease"></div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="cfoot" style="margin-top:8px">'+
+          '<button class="btn btn-outline btn-sm" onclick="flyTo('+r.lat+','+r.lng+')">📍 Lihat Peta</button>'+
+          (r.status!=='selesai'?'<button class="btn btn-outline btn-sm" onclick="showToast(\'Notifikasi WhatsApp akan dikirim ke nomor terdaftar\')">📲 Update via WA</button>':'<span style="font-size:10px;color:#16a34a;font-weight:700">✅ Selesai ditangani</span>')+
+        '</div>'+
+      '</div>';
+    }).join('')||'<div style="text-align:center;padding:20px;color:#94a3b8;font-size:11px">Belum ada laporan di sesi ini</div>')+
+    '<div class="div"></div>'+
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;border:1px solid var(--border)">'+
+      '<div style="font-size:11px;font-weight:700;margin-bottom:8px">📞 Kontak Pengaduan Langsung</div>'+
+      '<div style="font-size:11px;color:#64748b;line-height:2">'+
+        '☎️ Dinas PUPR: <strong>(0234) 272202</strong><br>'+
+        '📲 WhatsApp: <strong>0811-9xxx-xxxx</strong><br>'+
+        '📧 Email: <strong>pupr@indramayukab.go.id</strong><br>'+
+        '🕐 Jam kerja: Senin–Jumat, 08.00–16.00 WIB'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+window.cekTiket = function(){
+  var input = (document.getElementById('cek-tiket-input')||{}).value||'';
+  var q = input.trim().toUpperCase();
+  var result = document.getElementById('tiket-result');
+  if(!q){ showToast('Masukkan nomor tiket terlebih dahulu'); return; }
+  var found = userReports.find(function(r){ return r.id.toUpperCase()===q; });
+  if(!found){
+    result.innerHTML=
+      '<div class="alert al-danger" style="margin-top:10px">'+
+        '❌ Tiket <strong>'+q+'</strong> tidak ditemukan. Periksa kembali nomor tiket Anda.'+
+      '</div>';
+    return;
+  }
+  var prog={baru:15,proses:55,selesai:100}[found.status]||0;
+  var progColor={baru:'#dc2626',proses:'#f59e0b',selesai:'#16a34a'}[found.status]||'#64748b';
+  var steps=[
+    {label:'Laporan Diterima',done:true},
+    {label:'Verifikasi Lapangan',done:found.status==='proses'||found.status==='selesai'},
+    {label:'Perbaikan Dimulai',done:found.status==='proses'||found.status==='selesai'},
+    {label:'Selesai',done:found.status==='selesai'},
+  ];
+  result.innerHTML=
+    '<div class="card c-'+(found.status==='selesai'?'green':found.status==='proses'?'orange':'red')+'" style="margin-top:10px">'+
+      '<div style="font-size:13px;font-weight:800;margin-bottom:8px">'+
+        '🎫 Tiket: <span style="font-family:monospace">'+found.id+'</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;margin-bottom:10px">'+
+        '<div><span style="color:#64748b">Masalah</span><br><strong>'+found.masalah+'</strong></div>'+
+        '<div><span style="color:#64748b">Lokasi</span><br><strong>'+found.lokasi+'</strong></div>'+
+        '<div><span style="color:#64748b">Pelapor</span><br><strong>'+found.pelapor+'</strong></div>'+
+        '<div><span style="color:#64748b">Waktu Lapor</span><br><strong>'+found.waktu+'</strong></div>'+
+      '</div>'+
+      // Progress steps
+      '<div style="display:flex;justify-content:space-between;margin-bottom:6px">'+
+        steps.map(function(s,i){
+          var c=s.done?'#16a34a':'#e2e8f0';
+          var tc=s.done?'#16a34a':'#94a3b8';
+          return '<div style="flex:1;text-align:center">'+
+            '<div style="width:22px;height:22px;border-radius:50%;background:'+c+';color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 3px">'+(s.done?'✓':(i+1))+'</div>'+
+            '<div style="font-size:9px;color:'+tc+';font-weight:600;line-height:1.2">'+s.label+'</div>'+
+          '</div>';
+        }).join('')+
+      '</div>'+
+      '<div style="height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden;margin-bottom:8px">'+
+        '<div style="width:'+prog+'%;height:100%;background:'+progColor+';border-radius:2px;transition:width 1s ease"></div>'+
+      '</div>'+
+      '<div class="cfoot">'+
+        '<button class="btn btn-navy btn-sm" onclick="flyTo('+found.lat+','+found.lng+')">📍 Lihat di Peta</button>'+
+        '<button class="btn btn-outline btn-sm" onclick="showToast(\'Update status dikirim via WhatsApp\')">📲 Notif WA</button>'+
+      '</div>'+
+    '</div>';
+};
+
+// ================================================================
+// NOTIFIKASI BELL (real-time simulation)
+// ================================================================
+var NOTIFS=[
+  {id:1,icon:'🔴',judul:'Laporan Baru Masuk',desc:'LAP-0047 — Jl. Sudirman No.23',waktu:'Baru saja',baca:false,panel:'laporan'},
+  {id:2,icon:'⚠️',judul:'Anomali Konsumsi Terdeteksi',desc:'Meter MTR-045 melebihi +42%',waktu:'5 menit lalu',baca:false,panel:'admin'},
+  {id:3,icon:'💡',judul:'Laporan Berhasil Diselesaikan',desc:'LAP-0038 — Jl. Pahlawan No.10',waktu:'1 jam lalu',baca:true,panel:'laporan'},
+  {id:4,icon:'🌑',judul:'Zona Gelap Baru Teridentifikasi',desc:'Desa Cemara, Kec. Lohbener',waktu:'2 jam lalu',baca:true,panel:'admin'},
+];
+
+function buildNotifBell(){
+  var unread=NOTIFS.filter(function(n){return !n.baca;}).length;
+  // Inject bell into topbar right
+  var right=document.querySelector('.topbar-right')||document.getElementById('topbar');
+  if(!right) return;
+  var bell=document.createElement('div');
+  bell.style.cssText='position:relative;cursor:pointer;margin-right:4px';
+  bell.innerHTML=
+    '<button onclick="toggleNotifPanel()" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">'+
+      '🔔'+
+      (unread>0?'<span id="notif-badge" style="position:absolute;top:-2px;right:-2px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #0f2340">'+unread+'</span>':'')+
+    '</button>'+
+    '<div id="notif-panel" style="display:none;position:absolute;top:40px;right:0;width:280px;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:3000;overflow:hidden;border:1px solid var(--border)">'+
+      '<div style="background:#0f2340;padding:10px 13px;display:flex;justify-content:space-between;align-items:center">'+
+        '<span style="color:#fff;font-size:12px;font-weight:700">🔔 Notifikasi</span>'+
+        '<button onclick="markAllRead()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:10px;cursor:pointer;font-family:inherit">Tandai semua dibaca</button>'+
+      '</div>'+
+      NOTIFS.map(function(n){
+        return '<div onclick="notifClick('+n.id+')" style="padding:10px 13px;border-bottom:1px solid #f1f5f9;cursor:pointer;display:flex;gap:9px;background:'+(n.baca?'#fff':'#f0f9ff')+';transition:background .15s" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\''+(n.baca?'#fff':'#f0f9ff')+'\'">'+
+          '<span style="font-size:18px;flex-shrink:0">'+n.icon+'</span>'+
+          '<div>'+
+            '<div style="font-size:11px;font-weight:700;color:#0f2340">'+(n.baca?'':' &#9679; ')+n.judul+'</div>'+
+            '<div style="font-size:10px;color:#64748b">'+n.desc+'</div>'+
+            '<div style="font-size:10px;color:#94a3b8;margin-top:1px">'+n.waktu+'</div>'+
+          '</div>'+
+        '</div>';
+      }).join('')+
+      '<div style="padding:8px;text-align:center;font-size:11px;color:#2563eb;cursor:pointer" onclick="openPanel(\'laporan\');toggleNotifPanel()">Lihat semua laporan</div>'+
+    '</div>';
+  var btnLogin=document.getElementById('btn-login');
+  if(btnLogin) btnLogin.parentNode.insertBefore(bell,btnLogin);
+}
+
+window.toggleNotifPanel=function(){
+  var p=document.getElementById('notif-panel');
+  if(p) p.style.display=p.style.display==='none'?'block':'none';
+};
+window.markAllRead=function(){
+  NOTIFS.forEach(function(n){n.baca=true;});
+  var badge=document.getElementById('notif-badge');
+  if(badge) badge.style.display='none';
+  buildNotifBell();
+};
+window.notifClick=function(id){
+  var n=NOTIFS.find(function(x){return x.id===id;});
+  if(n){n.baca=true;toggleNotifPanel();openPanel(n.panel);}
+  var badge=document.getElementById('notif-badge');
+  var unread=NOTIFS.filter(function(x){return !x.baca;}).length;
+  if(badge){badge.textContent=unread;if(!unread)badge.style.display='none';}
+};
+
+// Close notif panel on outside click
+document.addEventListener('click',function(e){
+  var p=document.getElementById('notif-panel');
+  if(p&&p.style.display==='block'&&!p.contains(e.target)&&!e.target.closest('[onclick="toggleNotifPanel()"]')){
+    p.style.display='none';
+  }
+});
+
+// Simulate new notif every 45s
+setInterval(function(){
+  var newNotifs=[
+    {id:Date.now(),icon:'🔴',judul:'Laporan PJU Baru',desc:'Laporan masuk dari warga',waktu:'Baru saja',baca:false,panel:'laporan'},
+    {id:Date.now(),icon:'⚡',judul:'Anomali Terdeteksi',desc:'Konsumsi tidak wajar di gardu baru',waktu:'Baru saja',baca:false,panel:'admin'},
+  ];
+  var picked=newNotifs[Math.floor(Math.random()*newNotifs.length)];
+  NOTIFS.unshift(picked);
+  if(NOTIFS.length>8) NOTIFS.pop();
+  buildNotifBell();
+  // Show toast
+  showToast(picked.icon+' '+picked.judul);
+},45000);
+
+// ================================================================
+// EXPORT DATA (CSV download)
+// ================================================================
+window.exportCSV = function(){
+  var headers=['ID','Lat','Lng','Daya (W)','Gardu','No. Meter','Merk','ULP','Tiang','Tahun','Status','kWh Est','kWh Aktual','Anomali Score'];
+  var rows=[headers.join(',')];
+  PJU_DATA.forEach(function(d){
+    rows.push([d[0],d[1],d[2],d[3],d[4],d[5],d[6],d[7],d[8],d[9],d[10],d[11],d[12],d[13]].join(','));
+  });
+  var blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='SIPJU_Indramayu_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('📊 Data '+PJU_DATA.length+' titik PJU berhasil diexport!');
+};
+
+window.exportLaporan = function(){
+  var headers=['ID Laporan','Lokasi','Masalah','Deskripsi','Pelapor','Waktu','Status'];
+  var rows=[headers.join(',')];
+  userReports.forEach(function(r){
+    rows.push([r.id,'"'+r.lokasi+'"','"'+r.masalah+'"','"'+r.desc+'"',r.pelapor,r.waktu,r.status].join(','));
+  });
+  var blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='Laporan_PJU_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('📋 '+userReports.length+' laporan berhasil diexport!');
+};
+
 window.addEventListener('load',function(){
   initMap();
   openPanel('home');
+  buildNotifBell();
 });
 </script>
 </body>
